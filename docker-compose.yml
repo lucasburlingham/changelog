@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  php:
+    build: ./php-app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./php-app/src:/var/www/html
+      - ./php-app/data:/var/www/html/data
+    restart: unless-stopped
