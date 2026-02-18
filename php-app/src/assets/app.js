@@ -79,7 +79,7 @@ function renderEntries(list){
     const meta = document.createElement('div'); meta.className='meta';
     const d = new Date(e.timestamp);
     meta.textContent = `${d.toLocaleString()} — ${e.submitter||'—'}`;
-    const desc = document.createElement('div'); desc.textContent = e.description;
+    const desc = document.createElement('div'); desc.className = 'description'; desc.textContent = e.description;
     const tags = document.createElement('div'); tags.className='tags';
     (e.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s); });
     div.appendChild(title); div.appendChild(meta); div.appendChild(desc); div.appendChild(tags);
