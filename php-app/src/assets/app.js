@@ -12,7 +12,28 @@ function readForm(form){
 }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]||c)); }
+// Choose readable text color (black or white) for a hex color (expects "rrggbb" or "#rrggbb")
+function pickTextColor(hex){
+  if(!hex) return 'var(--accent)';
+  const h = String(hex).replace(/^#/, '');
+  if(h.length !== 6) return 'var(--accent)';
+  const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
+  const yiq = (r*299 + g*587 + b*114) / 1000; // simple luminance
+  return yiq >= 128 ? '#000' : '#fff';
+}
 
+// Return true if background hex is considered "very light" (use to add subtle shadow/border)
+function isVeryLight(hex){
+  if(!hex) return false;
+  const h = String(hex).replace(/^#/, '');
+  if(h.length !== 6) return false;
+  const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
+  const lum = (r*299 + g*587 + b*114) / 1000;
+  return lum > 220;
+}
+
+// Return hex string for a known tag from `tagSuggestions` (or empty string)
+function hexForTag(tag){ const t = tagSuggestions.find(x=> x.tag === tag); return t ? (t.hex || '') : ''; }
 // Tag suggestions (populated from /api/tags.php)
 let tagSuggestions = [];
 async function loadTagSuggestions(){
@@ -69,6 +90,32 @@ function attachTagSuggestor(input){
   function updateSelected(){ Array.from(list.children).forEach((el, i)=> el.classList.toggle('selected', i===selected)); }
 }
 
+function addTagToInput(input, tag){
+  const parts = input.value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(parts.includes(tag)) return;
+  parts.push(tag);
+  input.value = parts.join(', ') + (parts.length ? ', ' : '');
+  input.focus();
+}
+
+function renderPopularTags(){
+  const container = document.getElementById('popularTags');
+  if(!container) return;
+  const used = tagSuggestions.filter(t=> (t.count||0) > 0).sort((a,b)=> (b.count||0) - (a.count||0) || a.tag.localeCompare(b.tag));
+  if(!used.length){ container.innerHTML=''; return; }
+  container.innerHTML = used.map(t=>{
+    const hex = t.hex || '';
+    const bg = hex ? ('#' + escapeHtml(hex)) : '';
+    const color = hex ? pickTextColor(hex) : 'var(--accent)';
+    const borderStyle = hex ? 'border:1px solid rgba(0,0,0,0.06);' : '';
+    const lightClass = (hex && isVeryLight(hex)) ? ' light' : '';
+    return `<button type="button" class="popular-tag${lightClass}" data-tag="${escapeHtml(t.tag)}" style="background:${bg}; color:${color}; ${borderStyle}"><span class="label">${escapeHtml(t.tag)}</span><span class="count">${t.count||0}</span></button>`;
+  }).join('');
+  container.querySelectorAll('.popular-tag').forEach(btn=>{
+    btn.addEventListener('click', ()=> addTagToInput(document.querySelector('#entryForm input[name="tags"]'), btn.dataset.tag));
+  });
+}
+
 function renderEntries(list){
   const container = document.getElementById('entries');
   container.innerHTML = '';
@@ -81,7 +128,17 @@ function renderEntries(list){
     meta.textContent = `${d.toLocaleString()} — ${e.submitter||'—'}`;
     const desc = document.createElement('div'); desc.className = 'description'; desc.textContent = e.description;
     const tags = document.createElement('div'); tags.className='tags';
-    (e.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s); });
+    (e.tags||[]).forEach(tagName=>{
+      const s = document.createElement('span'); s.className = 'tag'; s.textContent = tagName;
+      const hex = hexForTag(tagName);
+      if(hex){
+        s.style.background = '#' + hex;
+        s.style.color = pickTextColor(hex);
+        s.style.border = '1px solid rgba(0,0,0,0.06)';
+        if(isVeryLight(hex)) s.classList.add('light');
+      }
+      tags.appendChild(s);
+    });
     div.appendChild(title); div.appendChild(meta); div.appendChild(desc); div.appendChild(tags);
     container.appendChild(div);
   });
@@ -108,6 +165,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await loadTagSuggestions();
   attachTagSuggestor(entryForm.querySelector('input[name="tags"]'));
   attachTagSuggestor(filterForm.querySelector('input[name="tags"]'));
+  renderPopularTags();
 
   entryForm.addEventListener('submit', async e=>{
     e.preventDefault();
@@ -116,6 +174,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     try{
       await apiFetch('/api/entries.php', {method:'POST', body:JSON.stringify(payload)});
       entryForm.reset();
+      await loadTagSuggestions(); // refresh counts
+      renderPopularTags();
       loadAndShow(Object.fromEntries(new FormData(filterForm)));
     }catch(err){ alert('Error: '+err.message); }
   });

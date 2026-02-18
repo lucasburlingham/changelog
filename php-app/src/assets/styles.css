@@ -13,6 +13,10 @@ button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;bo
 .meta{font-size:12px;color:var(--muted)}
 .tags{margin-top:6px}
 .tag{display:inline-block;background:#eef6ff;color:var(--accent);padding:3px 8px;border-radius:999px;margin-right:6px;font-size:12px}
+
+/* visual tweak for very light/low-contrast tag backgrounds */
+.tag.light{box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06);}
+.popular-tag.light{box-shadow:0 1px 2px rgba(2,6,23,0.06);border-color:rgba(0,0,0,0.06);}
 .controls{display:flex;gap:8px;align-items:center}
 .controls > *{flex:1}
 
@@ -22,3 +26,9 @@ button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;bo
 .tag-suggestion:hover,.tag-suggestion.selected{background:#f3f7ff}
 .tag-suggestion .swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.08);flex:0 0 12px}
 .tag-suggestion .label{font-size:13px;color:#111}
+
+/* previously-used / popular tags list shown below the tags input */
+.popular-tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.popular-tag{background:#f3f7ff;border:1px solid #e6eefc;padding:6px 8px;border-radius:999px;cursor:pointer;font-size:13px;color:var(--accent);display:inline-flex;gap:8px;align-items:center}
+.popular-tag:hover{background:#eaf2ff}
+.popular-tag .count{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:999px;font-size:11px;color:#111;margin-left:6px}

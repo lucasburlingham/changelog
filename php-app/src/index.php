@@ -17,6 +17,7 @@
         <label>Description <textarea name="description" required></textarea></label>
         <label>Submitter <input name="submitter"></label>
         <label>Tags (comma separated) <input name="tags"></label>
+        <div id="popularTags" class="popular-tags" aria-live="polite"></div>
         <button type="submit">Submit</button>
       </form>
     </section>
