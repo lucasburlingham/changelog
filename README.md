@@ -27,8 +27,8 @@ To change the host port, edit `ports` in `docker-compose.yml` (default `8080:80`
 
 - `php-app/src/` — PHP web UI (`/`) and API endpoints under `/api`
   - `api/entries.php` — GET (list/filter) and POST (create)
-  - `api/tags.php` — returns tags from `php-app/data/tags.csv`
-- `php-app/data/` — runtime data (SQLite DB and `tags.csv`)
+  - `api/tags.php` — returns tags from `php-app/src/data/tags.csv`
+- `php-app/data/` — runtime data (SQLite DB)
 - `docker-compose.yml` — runs the PHP app with a bind mount for `src` and `data`
 
 ---
@@ -50,7 +50,7 @@ To change the host port, edit `ports` in `docker-compose.yml` (default `8080:80`
   - Returns JSON array of entries. `tags` are returned as an array.
 
 - GET /api/tags.php
-  - Returns tags from `php-app/data/tags.csv` as JSON: [{"tag":"...","hex":"..."}, ...]
+  - Returns tags from `php-app/src/data/tags.csv` as JSON: [{"tag":"...","hex":"..."}, ...]
 
 OpenAPI / machine-readable spec: `openapi.yaml` — importable into Swagger / Redoc / tooling.
 
