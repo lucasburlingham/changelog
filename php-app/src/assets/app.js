@@ -19,44 +19,6 @@ async function loadTagSuggestions(){
   try{ const res = await fetch('/api/tags.php'); tagSuggestions = await res.json(); }catch(e){ tagSuggestions = []; }
 }
 
-// ADMIN: fetch and render tag management UI
-async function fetchTags(){
-  try{ return await apiFetch('/api/tags.php'); }catch(e){ return []; }
-}
-
-async function renderTagAdmin(){
-  const listEl = document.getElementById('tagList');
-  const tags = await fetchTags();
-  if(!tags.length){ listEl.innerHTML = '<p>No tags defined</p>'; return; }
-  const rows = tags.map(t=>`<tr data-tag="${escapeHtml(t.tag)}"><td><div class="swatch" style="background:#${escapeHtml(t.hex||'')};width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.08)"></div></td><td class="tag-name">${escapeHtml(t.tag)}</td><td class="tag-hex">${escapeHtml(t.hex)}</td><td><button class="btn btn-small btn-edit">Edit</button> <button class="btn btn-small btn-danger btn-delete">Delete</button></td></tr>`).join('');
-  listEl.innerHTML = `<table class="tag-table"><thead><tr><th></th><th>Tag</th><th>Hex</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-
-  // wire edit/delete
-  Array.from(listEl.querySelectorAll('.btn-delete')).forEach(b=> b.addEventListener('click', async e=>{
-    const row = e.target.closest('tr'); const tag = row.dataset.tag;
-    if(!confirm(`Delete tag "${tag}"?`)) return;
-    const res = await fetch('/api/tags.php?tag='+encodeURIComponent(tag), { method: 'DELETE' });
-    if(!res.ok) { alert('Delete failed'); return; }
-    await loadTagSuggestions(); renderTagAdmin();
-  }));
-
-  Array.from(listEl.querySelectorAll('.btn-edit')).forEach((b)=> b.addEventListener('click', e=>{
-    const row = e.target.closest('tr');
-    const tag = row.dataset.tag; const hex = row.querySelector('.tag-hex').textContent || '';
-    row.innerHTML = `<td><div class="swatch" style="background:#${escapeHtml(hex)};width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.08)"></div></td><td><input class="edit-tag" value="${escapeHtml(tag)}"></td><td><input class="edit-hex" value="${escapeHtml(hex)}"></td><td><button class="btn btn-small btn-save">Save</button> <button class="btn btn-small btn-cancel">Cancel</button></td>`;
-    row.querySelector('.btn-cancel').addEventListener('click', ()=> renderTagAdmin());
-    row.querySelector('.btn-save').addEventListener('click', async ()=>{
-      const newTag = row.querySelector('.edit-tag').value.trim();
-      const newHex = row.querySelector('.edit-hex').value.trim();
-      try{
-        const res = await fetch('/api/tags.php', { method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ oldTag: tag, tag: newTag, hex: newHex }) });
-        if(!res.ok) throw new Error(await res.text());
-        await loadTagSuggestions(); renderTagAdmin();
-      }catch(err){ alert('Update failed: '+err.message); }
-    });
-  }));
-}
-
 function attachTagSuggestor(input){
   const wrapper = document.createElement('div');
   input.parentNode.insertBefore(wrapper, input.nextSibling);
@@ -156,34 +118,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       entryForm.reset();
       loadAndShow(Object.fromEntries(new FormData(filterForm)));
     }catch(err){ alert('Error: '+err.message); }
-  });
-
-  // tag admin form
-  const tagAddForm = document.getElementById('tagAddForm');
-  if(tagAddForm){
-    tagAddForm.addEventListener('submit', async e=>{
-      e.preventDefault();
-      const fd = new FormData(tagAddForm);
-      const tag = (fd.get('tag')||'').toString().trim();
-      const hex = ((fd.get('hex')||'').toString().trim()).replace(/^#/, '');
-      if(!tag) return alert('tag required');
-      try{
-        await apiFetch('/api/tags.php', { method: 'POST', body: JSON.stringify({ tag, hex }) });
-        tagAddForm.reset();
-        await loadTagSuggestions();
-        renderTagAdmin();
-      }catch(err){ alert('Add tag failed: '+err.message); }
-    });
-  }
-
-  document.getElementById('refreshTags')?.addEventListener('click', async ()=>{ await loadTagSuggestions(); renderTagAdmin(); });
-
-  filterForm.addEventListener('submit', e=>{
-    e.preventDefault();
-    const f = Object.fromEntries(new FormData(filterForm));
-    if(f.from) f.from = new Date(f.from).toISOString();
-    if(f.to) f.to = new Date(f.to).toISOString();
-    loadAndShow(f);
   });
 
   filterForm.addEventListener('submit', e=>{

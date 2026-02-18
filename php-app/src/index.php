@@ -46,21 +46,6 @@
     </section>
 
     <section class="card">
-      <h2>Manage tags (admin)</h2>
-      <div id="tagAdmin">
-        <form id="tagAddForm" class="tag-admin-form">
-          <label>Tag <input name="tag" required></label>
-          <label>Hex (e.g. 00ff00) <input name="hex" placeholder="optional"></label>
-          <div class="controls">
-            <button type="submit">Add tag</button>
-            <button type="button" id="refreshTags">Refresh</button>
-          </div>
-        </form>
-        <div id="tagList"></div>
-      </div>
-    </section>
-
-    <section class="card">
       <h2>Entries</h2>
       <div id="entries"></div>
     </section>
