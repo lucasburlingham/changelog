@@ -1,0 +1,154 @@
+openapi: "3.0.3"
+info:
+  title: PHP Changelog API
+  version: "1.0.0"
+  description: |
+    Minimal OpenAPI specification for the PHP Changelog app.
+    Covers `/api/entries.php` (GET, POST) and `/api/tags.php` (GET).
+servers:
+  - url: http://localhost:8080
+    description: Local development server (change as needed)
+paths:
+  /api/entries.php:
+    get:
+      summary: List changelog entries
+      description: Returns a filtered, sorted list of changelog entries.
+      parameters:
+        - name: from
+          in: query
+          description: "Start timestamp (ISO 8601 string or epoch ms)."
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+              - type: integer
+        - name: to
+          in: query
+          description: "End timestamp (ISO 8601 string or epoch ms)."
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+              - type: integer
+        - name: submitter
+          in: query
+          description: Partial match on `submitter`.
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: Comma-separated tags (entry must contain each tag).
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: Sort column
+          schema:
+            type: string
+            enum: [timestamp, submitter, tags, title]
+        - name: order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: JSON array of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Entry'
+    post:
+      summary: Create a changelog entry
+      description: Accepts JSON body (or form fields). `title` is required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryCreate'
+      responses:
+        '201':
+          description: Created entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '400':
+          description: Validation error (missing/invalid fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/tags.php:
+    get:
+      summary: List available tags
+      responses:
+        '200':
+          description: JSON array of tags (from `php-app/data/tags.csv`)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+components:
+  schemas:
+    Entry:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Entry id (hex)
+        title:
+          type: string
+        description:
+          type: string
+        submitter:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: integer
+          description: Milliseconds since UNIX epoch
+      required: [id, title, timestamp]
+    EntryCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        submitter:
+          type: string
+        tags:
+          description: Either an array of strings or a comma-separated string
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+        timestamp:
+          description: ISO datetime or epoch ms (optional)
+          oneOf:
+            - type: string
+              format: date-time
+            - type: integer
+      required: [title]
+    Tag:
+      type: object
+      properties:
+        tag:
+          type: string
+        hex:
+          type: string
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

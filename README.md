@@ -1,131 +1,72 @@
-# Static Changelog App
+# PHP Changelog — simple changelog web app (PHP + SQLite)
 
-This is a small static single-page app that runs from static hosting (S3, GitHub Pages, etc.). It implements a client-side API at `/api/entries` using a service worker and stores entries in IndexedDB.
+A small server-backed changelog application with a browser UI and a tiny JSON API. The app is implemented in PHP, stores data in SQLite, and is packaged for local run using Docker Compose.
 
-## Features
+✅ Key features
 
 - Submit changelog entries (title, description, submitter, tags)
-- GET entries with filtering by date/time (`from`, `to` ISO), `submitter`, and `tags` (comma-separated)
-
-## How it works
-
-- The service worker `sw.js` intercepts requests to `/api/entries` and implements `GET` and `POST` backed by IndexedDB.
-- The page `index.html` provides UI and uses `fetch('/api/entries')` and `fetch('/api/entries', {method:'POST'})`.
-
-## Notes & deployment
-
-- Upload all files to your static host root. Ensure `sw.js` and `index.html` are served from the same origin.
-- Service workers only control pages on the same origin and only work over HTTPS (or localhost). When hosted on S3 behind CloudFront or similar, ensure HTTPS.
-- The API implemented here will respond to requests made by pages controlled by the service worker. It does not create a network-accessible API for arbitrary external curl requests to the S3 URL.
-
-## Usage
-
-1. Open the hosted `index.html` in a browser (HTTPS). The app registers the service worker.
-2. Use the form to submit entries. Use the filter form to query by `from`, `to`, `submitter`, or `tags`.
-
-If you need a network-accessible API (so other services can POST directly to the bucket), I can add an alternative approach using lightweight serverless endpoints (Lambda, API Gateway, or S3 object PUTs). Ask if you'd like that.
+- List and filter entries by date range (`from` / `to`), `submitter`, and `tags`
+- Persisted storage using SQLite (`php-app/data/changelog.db`)
+- Lightweight JSON API for automation or scripting
 
 ---
 
-## PHP + Docker Compose (SQLite)
-
-A ready-to-run PHP + SQLite implementation is included in `php-app/`. It provides both a small web UI and an API:
-
-- POST `/api/entries.php`  — create an entry (JSON)
-- GET  `/api/entries.php`  — list / filter / sort entries (query params: `from`, `to`, `submitter`, `tags`, `sort`, `order`)
-
-Run locally with Docker Compose:
+## Quick start (Docker Compose)
 
 ```bash
+# build and run (default host port 8080)
 docker compose up --build -d
-# app -> http://localhost:8080/
+# open http://localhost:8080/
 ```
 
-Change the host port
+To change the host port, edit `ports` in `docker-compose.yml` (default `8080:80`) or map a different host port when running the container.
 
-- Edit the host-side port mapping in `docker-compose.yml` (left side is host, right side is container).
-  - Default: `8080:80` (host 8080 → container 80)
-  - To use port 9090 change to `9090:80` then recreate the service.
+---
 
-Example — edit `docker-compose.yml` ports section:
+## What this repository contains
 
-```yaml
-services:
-  php:
-    ports:
-      - "9090:80"    # host:container
-```
+- `php-app/src/` — PHP web UI (`/`) and API endpoints under `/api`
+  - `api/entries.php` — GET (list/filter) and POST (create)
+  - `api/tags.php` — returns tags from `php-app/data/tags.csv`
+- `php-app/data/` — runtime data (SQLite DB and `tags.csv`)
+- `docker-compose.yml` — runs the PHP app with a bind mount for `src` and `data`
 
-Then restart:
+---
 
-```bash
-docker compose up -d --build
-# open http://localhost:9090/
-```
+## API
 
-Run on a different port without editing files
+- POST /api/entries.php
+  - Create an entry. Accepts JSON body or form fields.
+  - Required: `title`. Optional: `description`, `submitter`, `tags` (array or comma-separated), `timestamp` (ms or ISO).
+  - Returns created entry (JSON) with `id` and `timestamp` (milliseconds).
 
-```bash
-# map host port 9090 -> container 80
-docker run -p 9090:80 --rm -v "$PWD/php-app/src":/var/www/html -v "$PWD/php-app/data":/var/www/html/data php:8.2-apache
-```
+- GET /api/entries.php
+  - List entries. Query params:
+    - `from`, `to` — ISO datetime or epoch (ms) to filter by timestamp
+    - `submitter` — partial match
+    - `tags` — comma-separated tags (matches entries that contain each tag)
+    - `sort` — `timestamp` (default), `submitter`, `tags`, `title`
+    - `order` — `asc` or `desc` (default `desc`)
+  - Returns JSON array of entries. `tags` are returned as an array.
 
-Synology / DSM — step-by-step
+- GET /api/tags.php
+  - Returns tags from `php-app/data/tags.csv` as JSON: [{"tag":"...","hex":"..."}, ...]
 
-1. Copy the project to your Synology (example path `/volume1/docker/changelog`). Use File Station or scp/rsync:
+OpenAPI / machine-readable spec: `openapi.yaml` — importable into Swagger / Redoc / tooling.
 
-```bash
-scp -r . user@<synology-ip>:/volume1/docker/changelog
-```
+Notes: API responses are JSON. There is no authentication or CORS headers by default.
 
-2. SSH to the NAS and enter the folder:
+---
 
-```bash
-ssh user@<synology-ip>
-cd /volume1/docker/changelog
-```
+## Data format & storage
 
-3. Start the service with Docker Compose:
+- Database: `php-app/data/changelog.db` (SQLite). Table `entries` stores: `id`, `title`, `description`, `submitter`, `tags`, `timestamp`.
+- Tags in the DB are stored as a CSV string with surrounding commas (e.g. `,bug,ui,`) to allow fast LIKE-based matching.
+- `timestamp` is stored as milliseconds since the UNIX epoch.
 
-```bash
-docker compose up -d --build
-```
+---
 
-4. Change host port (two options):
-   - Edit `docker-compose.yml` (change `ports: - "8080:80"` → `"9090:80"`) and run `docker compose up -d --build`.
-   - Or use DSM: Docker > Container > select container > Edit > Port Settings → change the local port.
-
-5. Fix data permissions if the DB can't be written:
-
-```bash
-sudo chown -R http:http /volume1/docker/changelog/php-app/data
-sudo chmod -R 755 /volume1/docker/changelog/php-app/data
-```
-
-6. Access the app at `http://<synology-ip>:<host-port>`.
-
-7. To update: `git pull` then `docker compose up -d --build`.
-
-Notes: use DSM Reverse Proxy for TLS or configure Application Portal to issue certificates.
-
-Express backend port (optional)
-
-- The Synology/Express backend (if used) respects the `PORT` environment variable. Example to run Express on 3000:
-
-```bash
-# set env and start (example for manual docker run / systemd etc.)
-export PORT=3000
-node backend/server.js
-# then map host port -> container port as needed in your deployment
-```
-
-Security & notes
-
-- The container always listens on container port `80` by default — changing the host port does not change the container internals.
-- Use a reverse proxy (NGINX, Traefik) if you need TLS or virtual hosts on Synology.
-
-
-Examples
+## Example usage
 
 Create an entry:
 
@@ -135,12 +76,35 @@ curl -sS -X POST http://localhost:8080/api/entries.php \
   -d '{"title":"Fix bug","description":"details","submitter":"alice","tags":["bug","ui"]}'
 ```
 
-Query entries (filter by tag, sort by submitter ascending):
+Query entries (filter by tag, sorted by submitter ascending):
 
 ```bash
 curl 'http://localhost:8080/api/entries.php?tags=bug&sort=submitter&order=asc'
 ```
 
-Data is stored in `php-app/data/changelog.db` (SQLite).
+Get available tags:
 
-Tell me if you want a Synology Docker/DSM runbook, a systemd unit or an automated deploy workflow.
+```bash
+curl http://localhost:8080/api/tags.php
+```
+
+---
+
+## Development & requirements
+
+- Requires PHP with PDO and `pdo_sqlite` enabled (the app checks for these and returns JSON errors if missing).
+- The code is mounted from `php-app/src` and data from `php-app/data` when using Docker Compose.
+- To run without Compose for quick testing:
+
+```bash
+docker run -p 8080:80 --rm -v "$PWD/php-app/src":/var/www/html -v "$PWD/php-app/data":/var/www/html/data php:8.2-apache
+```
+
+---
+
+## Security & notes
+
+- No authentication; do not expose to untrusted networks without adding auth/reverse proxy and TLS.
+- Timestamps are milliseconds; tags are matched using SQL LIKE queries.
+
+If you want, I can add API docs, authentication, or a small migration to a separate database backend. 🔧
