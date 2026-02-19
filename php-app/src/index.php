@@ -15,19 +15,20 @@ foreach ($paths as $path) {
 $page = $ini['page'] ?? [];
 $cfg  = $ini['settings'] ?? [];
 
-$pageTitle = $page['title'] ?? 'PHP Changelog (SQLite)';
-$pageDesc  = $page['description'] ?? '';
+// prefer environment variables (set via docker-compose/.env); fall back to settings.ini values
+$pageTitle = getenv('PAGE_TITLE') ?: ($page['title'] ?? 'PHP Changelog (SQLite)');
+$pageDesc  = getenv('PAGE_DESCRIPTION') ?: ($page['description'] ?? '');
 
-$stylesheet = $cfg['stylesheet'] ?? 'styles.css';
+$stylesheet = getenv('STYLESHEET') ?: ($cfg['stylesheet'] ?? 'styles.css');
 $candidate = __DIR__ . '/assets/' . $stylesheet;
 $stylesheetUrl = file_exists($candidate) ? '/assets/' . $stylesheet : '/assets/styles.css';
 
-$companyName = $cfg['company_name'] ?? '';
-$companyLogo = $cfg['company_logo'] ?? '';
+$companyName = getenv('COMPANY_NAME') ?: ($cfg['company_name'] ?? '');
+$companyLogo = getenv('COMPANY_LOGO') ?: ($cfg['company_logo'] ?? '');
 $logoPath = __DIR__ . '/assets/' . $companyLogo;
 $companyLogoUrl = ($companyLogo && file_exists($logoPath)) ? '/assets/' . $companyLogo : '';
-$companyUrl = $cfg['company_url'] ?? '';
-$contactEmail = $cfg['contact_email'] ?? '';
+$companyUrl = getenv('COMPANY_URL') ?: ($cfg['company_url'] ?? '');
+$contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
 ?>
 
 <!doctype html>

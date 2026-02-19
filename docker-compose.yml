@@ -3,8 +3,9 @@ services:
     build: ./php-app
     ports:
       - "8080:80"
+    env_file:
+      - .env
     volumes:
       - ./php-app/src:/var/www/html
       - ./php-app/data:/var/www/html/data
-      - ./settings.ini:/var/www/html/settings.ini:ro
     restart: unless-stopped
