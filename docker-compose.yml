@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   php:
     build: ./php-app
@@ -8,4 +6,5 @@ services:
     volumes:
       - ./php-app/src:/var/www/html
       - ./php-app/data:/var/www/html/data
+      - ./settings.ini:/var/www/html/settings.ini:ro
     restart: unless-stopped
