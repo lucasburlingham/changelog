@@ -21,6 +21,22 @@ docker compose up --build -d
 
 To change the host port, edit `ports` in `docker-compose.yml` (default `8080:80`) or map a different host port when running the container.
 
+## Configuration (environment variables)
+
+The app reads configuration from environment variables (Docker Compose loads values from a project-root `.env` by default). Create or edit `.env` in the repository root to override these values.
+
+Available variables (defaults shown):
+
+- `PAGE_TITLE` — page title (default: `Changelog`)
+- `PAGE_DESCRIPTION` — meta description (default: `Changelog of the project`)
+- `STYLESHEET` — stylesheet filename in `src/assets/` (default: `styles.css`)
+- `COMPANY_NAME` — company name shown in the footer (default: `My Company`)
+- `COMPANY_LOGO` — logo filename in `src/assets/` (default: `logo.png`)
+- `COMPANY_URL` — link for the company name (default: `https://www.mycompany.com`)
+- `CONTACT_EMAIL` — contact email for the footer (default: empty)
+
+docker-compose will load `.env` automatically (see the `env_file` entry in `docker-compose.yml`).
+
 ---
 
 ## What this repository contains

@@ -1,3 +1,6 @@
 # Don't include the php.ini file
 php-app/php.ini
 php-app/src/data/changelog.db
+
+# Local environment overrides
+.env

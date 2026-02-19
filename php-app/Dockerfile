@@ -3,7 +3,6 @@ FROM php:8.2-apache
 # SQLite PDO
 RUN apt-get update \
   && apt-get install -y --no-install-recommends libzip-dev zip \
-  && docker-php-ext-install pdo pdo_sqlite \
   && rm -rf /var/lib/apt/lists/*
 
 COPY src/ /var/www/html/
