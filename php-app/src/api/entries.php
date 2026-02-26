@@ -3,7 +3,16 @@ header('Content-Type: application/json; charset=utf-8');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $dbFile = __DIR__ . '/../data/changelog.db';
-if (!is_dir(dirname($dbFile))) mkdir(dirname($dbFile), 0777, true);
+// ensure parent directory exists (create if necessary) and is writable
+$dir = dirname($dbFile);
+if (!is_dir($dir)) {
+    @mkdir($dir, 0777, true);
+}
+if (!is_dir($dir) || !is_writable($dir)) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Unable to create or write to data directory: ' . $dir]);
+    exit;
+}
 
 // Validate PDO / pdo_sqlite availability so we return JSON errors instead of an HTML crash
 if (!extension_loaded('pdo')) {
@@ -18,7 +27,7 @@ if (!in_array('sqlite', PDO::getAvailableDrivers())) {
 }
 
 try {
-    $pdo = new PDO('sqlite:' . $dbFile);
+    $pdo = new PDO('sqlite:' . $dbFile, SQLITE3_OPEN_CREATE | SQLITE3_OPEN_READWRITE);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS entries (

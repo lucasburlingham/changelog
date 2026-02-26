@@ -2,11 +2,15 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // read known tags/hex from tags.csv (if present)
-// prefer runtime data directory, fall back to repository `src/data/tags.csv`
-$csvFile = __DIR__ . '/../../data/tags.csv';
+// prefer the runtime data directory adjacent to this API script, with a
+// fallback to the repository-level `src/data` (one directory up when the
+// API lives inside `src/api`).
+$csvFile = __DIR__ . '/../data/tags.csv';
 if (!is_file($csvFile)) {
-    $csvFile = __DIR__ . '/../data/tags.csv';
-}
+    // allow one more upward hop for CLI/test environments where the working
+    // directory might be `php-app/src` instead of the installed path.
+    $csvFile = __DIR__ . '/../../data/tags.csv';
+} 
 $known = [];
 if (is_file($csvFile) && ($h = fopen($csvFile, 'r')) !== false) {
     while (($row = fgetcsv($h)) !== false) {
@@ -24,7 +28,7 @@ $counts = [];
 $dbFile = __DIR__ . '/../data/changelog.db';
 if (is_file($dbFile) && extension_loaded('pdo') && in_array('sqlite', PDO::getAvailableDrivers())) {
     try {
-        $pdo = new PDO('sqlite:' . $dbFile);
+        $pdo = new PDO('sqlite:' . $dbFile, SQLITE3_OPEN_CREATE | SQLITE3_OPEN_READWRITE);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $stmt = $pdo->query('SELECT tags FROM entries');
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {

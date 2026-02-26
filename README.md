@@ -14,9 +14,8 @@ A small server-backed changelog application with a browser UI and a tiny JSON AP
 ## Quick start (Docker Compose)
 
 ```bash
-# build and run (default host port 8080)
+# Build and run using Docker Compose and Cloudflare Tunnel
 docker compose up --build -d
-# open http://localhost:8080/
 ```
 
 Setup for Cloudflare Tunnel (optional, for external access) is as follows:
@@ -49,9 +48,9 @@ Docker Compose will load `.env` automatically (see the `env_file` entry in `dock
 
 - `php-app/src/` — PHP web UI (`/`) and API endpoints under `/api`
   - `api/entries.php` — GET (list/filter) and POST (create)
-  - `api/tags.php` — returns tags from `php-app/src/data/tags.csv`
+  - `api/tags.php` — returns tags from the data directory (`php-app/src/data/tags.csv` by default)
 - `php-app/data/` — runtime data (SQLite DB)
-- `docker-compose.yml` — runs the PHP app with a bind mount for `src` and `data`
+- `compose.yml` — runs the PHP app with a bind mount for `src` and `data`
 
 ---
 
@@ -72,7 +71,7 @@ Docker Compose will load `.env` automatically (see the `env_file` entry in `dock
   - Returns JSON array of entries. `tags` are returned as an array.
 
 - GET /api/tags.php
-  - Returns tags from `php-app/src/data/tags.csv` as JSON: [{"tag":"...","hex":"..."}, ...]
+  - Returns tags from the data directory (typically `php-app/src/data/tags.csv`) as JSON: [{"tag":"...","hex":"..."}, ...]
 
 OpenAPI / machine-readable spec: `openapi.yaml` — importable into Swagger / Redoc / tooling.
 
@@ -93,7 +92,7 @@ Notes: API responses are JSON. There is no authentication or CORS headers by def
 Create an entry:
 
 ```bash
-curl -sS -X POST http://localhost:8080/api/entries.php \
+curl -sS -X POST http://changelog/api/entries.php \
   -H 'Content-Type: application/json' \
   -d '{"title":"Fix bug","description":"details","submitter":"alice","tags":["bug","ui"]}'
 ```
@@ -101,13 +100,13 @@ curl -sS -X POST http://localhost:8080/api/entries.php \
 Query entries (filter by tag, sorted by submitter ascending):
 
 ```bash
-curl 'http://localhost:8080/api/entries.php?tags=bug&sort=submitter&order=asc'
+curl 'http://changelog/api/entries.php?tags=bug&sort=submitter&order=asc'
 ```
 
 Get available tags:
 
 ```bash
-curl http://localhost:8080/api/tags.php
+curl http://changelog/api/tags.php
 ```
 
 ---
@@ -129,10 +128,8 @@ docker run -p 8080:80 --rm -v "$PWD/php-app/src":/var/www/html -v "$PWD/php-app/
 - No authentication; do not expose to untrusted networks without adding auth/reverse proxy and TLS.
 - Timestamps are milliseconds; tags are matched using SQL LIKE queries.
 
-If you want, I can add API docs, authentication, or a small migration to a separate database backend. 🔧
-
 ## Acknowledgments
 
 - Raptor mini.
 
-- [Erisa from Cloudflare Community](https://community.cloudflare.com/t/can-i-use-cloudflared-in-a-docker-compose-yml/407168) for >
+- [Erisa from Cloudflare Community](https://community.cloudflare.com/t/can-i-use-cloudflared-in-a-docker-compose-yml/407168) for the Cloudflare Tunnel last 10% solution.
