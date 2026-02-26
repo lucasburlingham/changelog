@@ -19,7 +19,12 @@ docker compose up --build -d
 # open http://localhost:8080/
 ```
 
-To change the host port, edit `ports` in `docker-compose.yml` (default `8080:80`) or map a different host port when running the container.
+Setup for Cloudflare Tunnel (optional, for external access) is as follows:
+
+1. Create a tunnel in Cloudflare and get the tunnel token (see [Cloudflare Tunnel docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/)).
+2. Set the `CLOUDFLARE_TUNNEL_TOKEN` variable in `.env` to the token value.
+3. When the app starts, it will automatically create a Cloudflare Tunnel using the provided token and print the public URL in the logs. You can view the logs with `docker compose logs -f` to see the tunnel URL.
+4. The app will be accessible at the provided Cloudflare Tunnel URL, which forwards to your local instance. Use `http://php:80` as the service URL in Cloudflare Tunnel configuration since the tunnel runs inside the Docker network.
 
 ## Configuration (environment variables)
 
@@ -34,8 +39,9 @@ Available variables (defaults shown):
 - `COMPANY_LOGO` — logo filename in `src/assets/` (default: `logo.png`)
 - `COMPANY_URL` — link for the company name (default: `https://www.mycompany.com`)
 - `CONTACT_EMAIL` — contact email for the footer (default: empty)
+- `CLOUDFLARE_TUNNEL_TOKEN` — if set, the app will attempt to create a Cloudflare Tunnel on startup using this token (see `cloudflared` docs for details)
 
-docker-compose will load `.env` automatically (see the `env_file` entry in `docker-compose.yml`).
+Docker Compose will load `.env` automatically (see the `env_file` entry in `docker-compose.yml`).
 
 ---
 
@@ -124,3 +130,9 @@ docker run -p 8080:80 --rm -v "$PWD/php-app/src":/var/www/html -v "$PWD/php-app/
 - Timestamps are milliseconds; tags are matched using SQL LIKE queries.
 
 If you want, I can add API docs, authentication, or a small migration to a separate database backend. 🔧
+
+## Acknowledgments
+
+- Raptor mini.
+
+- [Erisa from Cloudflare Community](https://community.cloudflare.com/t/can-i-use-cloudflared-in-a-docker-compose-yml/407168) for >
