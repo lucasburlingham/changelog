@@ -29,11 +29,11 @@ $logoPath = __DIR__ . '/assets/' . $companyLogo;
 $companyLogoUrl = ($companyLogo && file_exists($logoPath)) ? '/assets/' . $companyLogo : '';
 $companyUrl = getenv('COMPANY_URL') ?: ($cfg['company_url'] ?? '');
 $contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
-$tinyMceApiKey = trim((string) (getenv('TINYMCE_API_KEY') ?: ($cfg['tinymce_api_key'] ?? '')));
+$tinyMceApiKey = getenv('TINYMCE_API_KEY') ?: 'no-api-key';
 $tinyMceLocalLoader = __DIR__ . '/assets/tinymce/js/tinymce/tinymce.min.js';
 $tinyMceUrl = file_exists($tinyMceLocalLoader)
   ? '/assets/tinymce/js/tinymce/tinymce.min.js'
-  : 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey !== '' ? $tinyMceApiKey : 'no-api-key') . '/tinymce/7/tinymce.min.js';
+  : 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tinymce/7/tinymce.min.js';
 ?>
 
 <!doctype html>
@@ -59,7 +59,6 @@ $tinyMceUrl = file_exists($tinyMceLocalLoader)
       <form id="entryForm">
         <label>Title <input name="title" required></label>
         <label>Description <textarea id="entryDescription" name="description" required></textarea></label>
-        <p class="meta form-note">Paste screenshots, drag images into the editor, or use the image button to place them inline.</p>
         <label>Submitter <input name="submitter"></label>
         <label>Tags (comma separated) <input name="tags"></label>
         <div id="popularTags" class="popular-tags" aria-live="polite"></div>

@@ -95,34 +95,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Tag'
-  /api/uploads.php:
-    post:
-      summary: Upload an inline description image
-      description: Accepts a multipart image upload from the rich-text editor and returns a URL for the stored file.
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-              required: [file]
-      responses:
-        '201':
-          description: Uploaded image metadata
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UploadResponse'
-        '400':
-          description: Validation error (missing file, unsupported type, too large)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Entry:
@@ -182,14 +154,3 @@ components:
       properties:
         error:
           type: string
-    UploadResponse:
-      type: object
-      properties:
-        location:
-          type: string
-          description: Public path of the stored uploaded image
-        width:
-          type: integer
-        height:
-          type: integer
-      required: [location, width, height]
