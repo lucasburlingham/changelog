@@ -129,7 +129,14 @@ $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tin
         </section>
       </div>
 
-      <div class="middle-column">
+      <div class="right-column">
+        <section class="card">
+          <h2>Entries</h2>
+          <div id="entries"></div>
+        </section>
+      </div>
+
+      <div class="filter-column">
         <section class="card">
           <h2>Filter / Query</h2>
           <form id="filterForm">
@@ -152,13 +159,6 @@ $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tin
               <button type="button" id="clearFilters">Clear</button>
             </div>
           </form>
-        </section>
-      </div>
-
-      <div class="right-column">
-        <section class="card">
-          <h2>Entries</h2>
-          <div id="entries"></div>
         </section>
       </div>
     </div>

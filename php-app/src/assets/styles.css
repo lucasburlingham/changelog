@@ -44,15 +44,15 @@ button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;bo
 .popular-tag:hover{background:#eaf2ff}
 .popular-tag .count{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:999px;font-size:11px;color:#111;margin-left:6px}
 
-/* Three-column layout: form (1fr) | filter (1fr) | entries (2fr) */
-.layout-grid{display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;align-items:start}
-.left-column,.middle-column,.right-column{display:flex;flex-direction:column;gap:12px}
+/* 12-column layout: 1 blank | 3 submission | 4 entries | 3 filter | 1 blank */
+.layout-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:start}
+.left-column{grid-column:2/5}
+.right-column{grid-column:5/9}
+.filter-column{grid-column:9/12}
+.left-column,.right-column,.filter-column{display:flex;flex-direction:column;gap:12px}
 
 /* Responsive: stack on smaller screens */
-@media(max-width:1400px){
-  .layout-grid{grid-template-columns:1fr 1fr;gap:12px}
-  .right-column{grid-column:1/-1}
-}
-@media(max-width:800px){
+@media(max-width:1200px){
   .layout-grid{grid-template-columns:1fr}
+  .left-column,.right-column,.filter-column{grid-column:auto}
 }
