@@ -1,137 +1,184 @@
-# PHP Changelog — simple changelog web app (PHP + SQLite)
+# PHP Changelog (PHP + SQLite)
 
-A small server-backed changelog application with a browser UI and a tiny JSON API. The app is implemented in PHP, stores data in SQLite, and is packaged for local run using Docker Compose.
+A small changelog app with a browser UI and JSON API.
 
-✅ Key features
+- UI for creating entries with rich-text descriptions
+- Filtering and sorting entries
+- Tag and submitter suggestions with usage counts
+- SQLite-backed persistence
+- Docker Compose setup with optional Cloudflare Tunnel
 
-- Submit changelog entries (title, rich-text description, submitter, tags)
-- List and filter entries by date range (`from` / `to`), `submitter`, and `tags`
-- Persisted storage using SQLite (`php-app/data/changelog.db`)
-- Lightweight JSON API for automation or scripting
-
----
-
-## Quick start (Docker Compose)
+## Quick start
 
 ```bash
-# Build and run using Docker Compose and Cloudflare Tunnel
 docker compose up --build -d
 ```
 
-Setup for Cloudflare Tunnel (optional, for external access) is as follows:
+The app is served by the `php` service on the Docker network. If you expose a local port in your environment, open that URL in your browser.
 
-1. Create a tunnel in Cloudflare and get the tunnel token (see [Cloudflare Tunnel docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/)).
-2. Set the `CLOUDFLARE_TUNNEL_TOKEN` variable in `.env` to the token value.
-3. When the app starts, it will automatically create a Cloudflare Tunnel using the provided token and print the public URL in the logs. You can view the logs with `docker compose logs -f` to see the tunnel URL.
-4. The app will be accessible at the provided Cloudflare Tunnel URL, which forwards to your local instance. Use `http://php:80` as the service URL in Cloudflare Tunnel configuration since the tunnel runs inside the Docker network.
+To watch logs:
 
-## Configuration (environment variables)
+```bash
+docker compose logs -f php
+```
 
-The app reads configuration from environment variables (Docker Compose loads values from a project-root `.env` by default). Create or edit `.env` in the repository root to override these values.
+## Optional Cloudflare Tunnel
 
-Available variables (defaults shown):
+The `compose.yml` file includes a `cloudflare-tunnel` service.
 
-- `PAGE_TITLE` — page title (default: `Changelog`)
-- `PAGE_DESCRIPTION` — meta description (default: `Changelog of the project`)
-- `STYLESHEET` — stylesheet filename in `src/assets/` (default: `styles.css`)
-- `COMPANY_NAME` — company name shown in the footer (default: `My Company`)
-- `COMPANY_LOGO` — logo filename in `src/assets/` (default: `logo.png`)
-- `COMPANY_URL` — link for the company name (default: `https://www.mycompany.com`)
-- `CONTACT_EMAIL` — contact email for the footer (default: empty)
-- `TINYMCE_API_KEY` — TinyMCE Cloud API key used when the local TinyMCE loader file is not present
-- `CLOUDFLARE_TUNNEL_TOKEN` — if set, the app will attempt to create a Cloudflare Tunnel on startup using this token (see `cloudflared` docs for details)
+1. Create a Cloudflare Tunnel and copy the token.
+2. Set `CLOUDFLARE_TUNNEL_TOKEN` in your root `.env`.
+3. Start services with `docker compose up -d`.
+4. View tunnel logs with `docker compose logs -f cloudflare-tunnel`.
 
-Docker Compose will load `.env` automatically (see the `env_file` entry in `docker-compose.yml`).
+Notes:
 
----
+- The tunnel service depends on `php` and forwards traffic to `http://php:80` inside the Docker network.
+- If `CLOUDFLARE_TUNNEL_TOKEN` is not set, the tunnel container will fail to start.
 
-## What this repository contains
+## Configuration
 
-- `php-app/src/` — PHP web UI (`/`) and API endpoints under `/api`
-  - `api/entries.php` — GET (list/filter) and POST (create)
-  - `api/tags.php` — returns tags from the data directory (`php-app/src/data/tags.csv` by default)
-- `php-app/data/` — runtime data (SQLite DB)
-- `compose.yml` — runs the PHP app with a bind mount for `src` and `data`
+`index.php` reads values in this order:
 
----
+1. Environment variables (`getenv`, `$_SERVER`, `$_ENV`)
+2. Root `.env` fallback parsing (for non-Docker Apache runs)
+3. `settings.ini` (`page` and `settings` sections)
+4. Hard-coded defaults
+
+Supported variables:
+
+- `PAGE_TITLE`
+- `PAGE_DESCRIPTION`
+- `STYLESHEET` (file under `php-app/src/assets/`)
+- `COMPANY_NAME`
+- `COMPANY_LOGO` (file under `php-app/src/assets/`)
+- `COMPANY_URL`
+- `CONTACT_EMAIL`
+- `TINYMCE_API_KEY`
+- `CLOUDFLARE_TUNNEL_TOKEN` (used by the compose tunnel service)
+
+TinyMCE behavior:
+
+- The page loads Tiny Cloud using `TINYMCE_API_KEY`.
+- If TinyMCE fails to load, the app still works with the plain textarea.
+
+## Repository structure
+
+- `compose.yml` - Docker services (`php`, optional `cloudflare-tunnel`)
+- `openapi.yaml` - API spec for core endpoints (`entries`, `tags`)
+- `php-app/`
+- `php-app/Dockerfile` - PHP Apache image
+- `php-app/php.ini` - runtime PHP settings (upload size, memory, errors)
+- `php-app/src/index.php` - UI page and config loading
+- `php-app/src/api/entries.php` - create/list entries
+- `php-app/src/api/tags.php` - list tags with counts/colors
+- `php-app/src/api/submitters.php` - list submitters with counts
+- `php-app/src/api/uploads.php` - image upload endpoint
+- `php-app/src/assets/app.js` - frontend logic (editor, sanitize, filters)
+- `php-app/src/assets/styles.css` - UI styling
+- `php-app/src/data/` - runtime data (`changelog.db`, `tags.csv`, `submitters.csv`, `uploads/`)
 
 ## API
 
-- POST /api/entries.php
-  - Create an entry. Accepts JSON body or form fields.
-  - Required: `title`. Optional: `description`, `submitter`, `tags` (array or comma-separated), `timestamp` (ms or ISO).
-  - `description` may contain sanitized HTML from the rich-text editor.
-  - Returns created entry (JSON) with `id` and `timestamp` (milliseconds).
+All endpoints return JSON.
 
-- GET /api/entries.php
-  - List entries. Query params:
-    - `from`, `to` — ISO datetime or epoch (ms) to filter by timestamp
-    - `submitter` — partial match
-    - `tags` — comma-separated tags (matches entries that contain each tag)
-    - `sort` — `timestamp` (default), `submitter`, `tags`, `title`
-    - `order` — `asc` or `desc` (default `desc`)
-  - Returns JSON array of entries. `tags` are returned as an array.
+### `POST /api/entries.php`
 
-- GET /api/tags.php
-  - Returns tags from the data directory (typically `php-app/src/data/tags.csv`) as JSON: [{"tag":"...","hex":"..."}, ...]
+Create an entry.
 
-OpenAPI / machine-readable spec: `openapi.yaml` — importable into Swagger / Redoc / tooling.
+- Accepts JSON body or form fields
+- Required: `title`
+- Optional: `description`, `submitter`, `tags` (array or comma-separated), `timestamp` (epoch ms or parseable datetime)
+- Returns created entry with `id` and `timestamp`
 
-Notes: API responses are JSON. There is no authentication or CORS headers by default.
+### `GET /api/entries.php`
 
----
+List entries with filters.
 
-## Data format & storage
+Query params:
 
-- Database: `php-app/data/changelog.db` (SQLite). Table `entries` stores: `id`, `title`, `description`, `submitter`, `tags`, `timestamp`.
-- Tags in the DB are stored as a CSV string with surrounding commas (e.g. `,bug,ui,`) to allow fast LIKE-based matching.
-- `timestamp` is stored as milliseconds since the UNIX epoch.
+- `from`, `to` - datetime/epoch filter
+- `submitter` - partial match
+- `tags` - comma-separated; each tag must be present
+- `sort` - `timestamp` (default), `submitter`, `tags`, `title`
+- `order` - `desc` (default) or `asc`
 
----
+### `GET /api/tags.php`
 
-## Example usage
+Returns tag objects with usage counts, merged from:
 
-Create an entry:
+- `php-app/src/data/tags.csv` (or fallback path)
+- tags found in `entries` table
 
-```bash
-curl -sS -X POST http://changelog/api/entries.php \
-  -H 'Content-Type: application/json' \
-  -d '{"title":"Fix bug","description":"details","submitter":"alice","tags":["bug","ui"]}'
+Shape:
+
+```json
+[
+  { "tag": "Bug", "hex": "FF0000", "count": 12 }
+]
 ```
 
-Query entries (filter by tag, sorted by submitter ascending):
+### `GET /api/submitters.php`
 
-```bash
-curl 'http://changelog/api/entries.php?tags=bug&sort=submitter&order=asc'
+Returns submitter objects with usage counts, merged from:
+
+- `php-app/src/data/submitters.csv` (or fallback path)
+- submitters found in `entries` table
+
+Shape:
+
+```json
+[
+  { "submitter": "Alice", "count": 7 }
+]
 ```
 
-Get available tags:
+### `POST /api/uploads.php`
 
-```bash
-curl http://changelog/api/tags.php
+Uploads an image file (`multipart/form-data`, field name: `file`).
+
+- Methods other than `POST` return `405`
+- Max size: 10 MB
+- Allowed MIME types: PNG, JPEG, GIF, WebP
+- Stores files under `php-app/src/data/uploads/`
+- Returns `201` with:
+
+```json
+{
+  "location": "/data/uploads/<generated-file>",
+  "width": 1200,
+  "height": 800
+}
 ```
 
----
+## OpenAPI
 
-## Development & requirements
+`openapi.yaml` currently documents:
 
-- Requires PHP with PDO and `pdo_sqlite` enabled (the app checks for these and returns JSON errors if missing).
-- The code is mounted from `php-app/src` and data from `php-app/data` when using Docker Compose.
-- To run without Compose for quick testing:
+- `GET/POST /api/entries.php`
+- `GET /api/tags.php`
 
-```bash
-docker run -p 8080:80 --rm -v "$PWD/php-app/src":/var/www/html -v "$PWD/php-app/data":/var/www/html/data php:8.2-apache
-```
+It does not yet include `submitters` or `uploads`.
 
----
+## Data and storage notes
 
-## Security & notes
+- SQLite database path: `php-app/src/data/changelog.db`
+- Table: `entries(id, title, description, submitter, tags, timestamp)`
+- Tags are stored as a comma-wrapped CSV string (example: `,bug,ui,`)
+- `timestamp` is stored as epoch milliseconds
 
-- No authentication; do not expose to untrusted networks without adding auth/reverse proxy and TLS.
-- Timestamps are milliseconds; tags are matched using SQL LIKE queries.
+## Development notes
+
+- Requires PHP with `pdo` and `pdo_sqlite`
+- `php.ini` sets `upload_max_filesize=10M` and `post_max_size=12M`
+- In compose, `php-app/src` is bind-mounted to `/var/www/html`
+
+## Security notes
+
+- No authentication or authorization is built in
+- No CORS policy headers are set by default
+- Rich text is sanitized client-side before submit; add server-side sanitization if you expose this publicly
 
 ## Acknowledgments
 
-- Raptor mini.
-
-- [Erisa from Cloudflare Community](https://community.cloudflare.com/t/can-i-use-cloudflared-in-a-docker-compose-yml/407168) for the Cloudflare Tunnel last 10% solution.
+- [Erisa from Cloudflare Community](https://community.cloudflare.com/t/can-i-use-cloudflared-in-a-docker-compose-yml/407168) for the Cloudflare Tunnel guidance.
