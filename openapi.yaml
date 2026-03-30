@@ -107,6 +107,7 @@ components:
           type: string
         description:
           type: string
+          description: Sanitized rich-text HTML
         submitter:
           type: string
         tags:
@@ -124,6 +125,7 @@ components:
           type: string
         description:
           type: string
+          description: Rich-text HTML is accepted and sanitized by the web form client
         submitter:
           type: string
         tags:

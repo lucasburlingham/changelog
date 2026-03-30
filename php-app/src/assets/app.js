@@ -11,6 +11,128 @@ function readForm(form){
   return out;
 }
 
+function getDescriptionEditor(){
+  return window.tinymce ? window.tinymce.get('entryDescription') : null;
+}
+
+async function initDescriptionEditor(){
+  const textarea = document.getElementById('entryDescription');
+  if(!textarea || !window.tinymce) return null;
+
+  const existingEditor = getDescriptionEditor();
+  if(existingEditor) return existingEditor;
+
+  const editors = await window.tinymce.init({
+    selector: '#entryDescription',
+    height: 280,
+    menubar: false,
+    branding: false,
+    promotion: false,
+    browser_spellcheck: true,
+    statusbar: false,
+    plugins: 'lists link table preview wordcount searchreplace quickbars',
+    toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link blockquote table | removeformat | searchreplace preview',
+    block_formats: 'Paragraph=p; Heading 2=h2; Heading 3=h3; Heading 4=h4',
+    content_style: 'body { font-family: Segoe UI, Roboto, Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
+    setup(editor){
+      const syncEditor = ()=> editor.save();
+      editor.on('change input undo redo setcontent', syncEditor);
+    }
+  });
+
+  return editors[0] || null;
+}
+
+function sanitizeUrl(value){
+  const rawValue = String(value || '').trim();
+  if(!rawValue) return '';
+  if(rawValue.startsWith('#') || rawValue.startsWith('/')) return rawValue;
+
+  try{
+    const url = new URL(rawValue, window.location.origin);
+    return ['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol) ? url.href : '';
+  }catch{
+    return '';
+  }
+}
+
+function sanitizeRichTextHtml(html){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html || ''}</div>`, 'text/html');
+  const sourceRoot = doc.body.firstElementChild || doc.body;
+  const safeDoc = document.implementation.createHTMLDocument('sanitized');
+  const safeRoot = safeDoc.createElement('div');
+  const allowedTags = new Set(['a', 'blockquote', 'br', 'code', 'em', 'h2', 'h3', 'h4', 'hr', 'li', 'ol', 'p', 'pre', 's', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'u', 'ul']);
+
+  function sanitizeNode(node, parent){
+    if(node.nodeType === Node.TEXT_NODE){
+      parent.appendChild(safeDoc.createTextNode(node.textContent || ''));
+      return;
+    }
+
+    if(node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tagName = node.tagName.toLowerCase();
+    if(!allowedTags.has(tagName)){
+      Array.from(node.childNodes).forEach(child => sanitizeNode(child, parent));
+      return;
+    }
+
+    const safeElement = safeDoc.createElement(tagName);
+    if(tagName === 'a'){
+      const href = sanitizeUrl(node.getAttribute('href'));
+      if(href) safeElement.setAttribute('href', href);
+      if(node.getAttribute('target') === '_blank'){
+        safeElement.setAttribute('target', '_blank');
+        safeElement.setAttribute('rel', 'noopener noreferrer');
+      }
+    }
+
+    if(tagName === 'td' || tagName === 'th'){
+      ['colspan', 'rowspan'].forEach(attr => {
+        const value = node.getAttribute(attr);
+        if(value && /^\d+$/.test(value)) safeElement.setAttribute(attr, value);
+      });
+    }
+
+    if(tagName === 'ol'){
+      const start = node.getAttribute('start');
+      if(start && /^\d+$/.test(start)) safeElement.setAttribute('start', start);
+    }
+
+    Array.from(node.childNodes).forEach(child => sanitizeNode(child, safeElement));
+    parent.appendChild(safeElement);
+  }
+
+  Array.from(sourceRoot.childNodes).forEach(child => sanitizeNode(child, safeRoot));
+  return safeRoot.innerHTML.trim();
+}
+
+function isRichTextBlank(html){
+  if(!html) return true;
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+  const text = (doc.body.textContent || '').replace(/\u00a0/g, ' ').trim();
+  return text === '' && !doc.body.querySelector('hr, table');
+}
+
+function clearDescriptionEditor(){
+  const editor = getDescriptionEditor();
+  if(!editor) return;
+  editor.setContent('');
+  editor.save();
+}
+
+function focusDescriptionEditor(){
+  const editor = getDescriptionEditor();
+  if(editor){
+    editor.focus();
+    return;
+  }
+
+  const textarea = document.getElementById('entryDescription');
+  if(textarea) textarea.focus();
+}
+
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]||c)); }
 // Choose readable text color (black or white) for a hex color (expects "rrggbb" or "#rrggbb")
 function pickTextColor(hex){
@@ -126,7 +248,7 @@ function renderEntries(list){
     const meta = document.createElement('div'); meta.className='meta';
     const d = new Date(e.timestamp);
     meta.textContent = `${d.toLocaleString()} — ${e.submitter||'—'}`;
-    const desc = document.createElement('div'); desc.className = 'description'; desc.textContent = e.description;
+    const desc = document.createElement('div'); desc.className = 'description'; desc.innerHTML = sanitizeRichTextHtml(e.description);
     const tags = document.createElement('div'); tags.className='tags';
     (e.tags||[]).forEach(tagName=>{
       const s = document.createElement('span'); s.className = 'tag'; s.textContent = tagName;
@@ -161,6 +283,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const filterForm = document.getElementById('filterForm');
   const clearBtn = document.getElementById('clearFilters');
 
+  await initDescriptionEditor();
+
   // load server tag list and attach suggestors to tag inputs
   await loadTagSuggestions();
   attachTagSuggestor(entryForm.querySelector('input[name="tags"]'));
@@ -169,11 +293,21 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   entryForm.addEventListener('submit', async e=>{
     e.preventDefault();
+    const editor = getDescriptionEditor();
+    if(editor) editor.save();
     const v = readForm(entryForm);
-    const payload = {title:v.title, description:v.description, submitter:v.submitter, tags:(v.tags||'').split(',').map(s=>s.trim()).filter(Boolean)};
+    const description = sanitizeRichTextHtml(v.description);
+    if(isRichTextBlank(description)){
+      alert('Description is required.');
+      focusDescriptionEditor();
+      return;
+    }
+
+    const payload = {title:v.title, description, submitter:v.submitter, tags:(v.tags||'').split(',').map(s=>s.trim()).filter(Boolean)};
     try{
       await apiFetch('/api/entries.php', {method:'POST', body:JSON.stringify(payload)});
       entryForm.reset();
+      clearDescriptionEditor();
       await loadTagSuggestions(); // refresh counts
       renderPopularTags();
       loadAndShow(Object.fromEntries(new FormData(filterForm)));

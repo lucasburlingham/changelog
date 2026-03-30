@@ -4,7 +4,7 @@ A small server-backed changelog application with a browser UI and a tiny JSON AP
 
 ✅ Key features
 
-- Submit changelog entries (title, description, submitter, tags)
+- Submit changelog entries (title, rich-text description, submitter, tags)
 - List and filter entries by date range (`from` / `to`), `submitter`, and `tags`
 - Persisted storage using SQLite (`php-app/data/changelog.db`)
 - Lightweight JSON API for automation or scripting
@@ -59,6 +59,7 @@ Docker Compose will load `.env` automatically (see the `env_file` entry in `dock
 - POST /api/entries.php
   - Create an entry. Accepts JSON body or form fields.
   - Required: `title`. Optional: `description`, `submitter`, `tags` (array or comma-separated), `timestamp` (ms or ISO).
+  - `description` may contain sanitized HTML from the rich-text editor.
   - Returns created entry (JSON) with `id` and `timestamp` (milliseconds).
 
 - GET /api/entries.php

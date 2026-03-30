@@ -29,6 +29,10 @@ $logoPath = __DIR__ . '/assets/' . $companyLogo;
 $companyLogoUrl = ($companyLogo && file_exists($logoPath)) ? '/assets/' . $companyLogo : '';
 $companyUrl = getenv('COMPANY_URL') ?: ($cfg['company_url'] ?? '');
 $contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
+$tinyMceLocalLoader = __DIR__ . '/assets/tinymce/js/tinymce/tinymce.min.js';
+$tinyMceUrl = file_exists($tinyMceLocalLoader)
+  ? '/assets/tinymce/js/tinymce/tinymce.min.js'
+  : 'https://cdn.tiny.cloud/1/no-api-key/tinymce/7/tinymce.min.js';
 ?>
 
 <!doctype html>
@@ -53,7 +57,7 @@ $contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
       <h2>Submit entry</h2>
       <form id="entryForm">
         <label>Title <input name="title" required></label>
-        <label>Description <textarea name="description" required></textarea></label>
+        <label>Description <textarea id="entryDescription" name="description" required></textarea></label>
         <label>Submitter <input name="submitter"></label>
         <label>Tags (comma separated) <input name="tags"></label>
         <div id="popularTags" class="popular-tags" aria-live="polite"></div>
@@ -111,6 +115,7 @@ $contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
     </footer>
   <?php endif; ?>
 
+  <script src="<?php echo htmlspecialchars($tinyMceUrl, ENT_QUOTES, 'UTF-8'); ?>" referrerpolicy="origin"></script>
   <script src="/assets/app.js"></script>
 </body>
 </html>
