@@ -15,21 +15,80 @@ foreach ($paths as $path) {
 $page = $ini['page'] ?? [];
 $cfg  = $ini['settings'] ?? [];
 
-// prefer environment variables (set via docker-compose/.env); fall back to settings.ini values
-$pageTitle = getenv('PAGE_TITLE') ?: ($page['title'] ?? 'PHP Changelog (SQLite)');
-$pageDesc  = getenv('PAGE_DESCRIPTION') ?: ($page['description'] ?? '');
+// Fallback .env loading for non-Docker Apache deployments.
+$dotenv = [];
+$dotenvPaths = [
+  dirname(__DIR__, 2) . '/.env',
+  dirname(__DIR__) . '/.env',
+  __DIR__ . '/.env'
+];
+foreach ($dotenvPaths as $dotenvPath) {
+  if (!is_file($dotenvPath)) {
+    continue;
+  }
 
-$stylesheet = getenv('STYLESHEET') ?: ($cfg['stylesheet'] ?? 'styles.css');
+  $lines = @file($dotenvPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+  if (!is_array($lines)) {
+    continue;
+  }
+
+  foreach ($lines as $line) {
+    $line = trim($line);
+    if ($line === '' || $line[0] === '#' || strpos($line, '=') === false) {
+      continue;
+    }
+
+    [$k, $v] = explode('=', $line, 2);
+    $k = trim($k);
+    if ($k === '' || isset($dotenv[$k])) {
+      continue;
+    }
+
+    $v = trim($v);
+    $dotenv[$k] = trim($v, "\"' ");
+  }
+
+  break;
+}
+
+function env_value(string $key, string $fallback = ''): string {
+  global $dotenv;
+
+  $v = getenv($key);
+  if ($v !== false && $v !== '') {
+    return (string)$v;
+  }
+
+  if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+    return (string)$_SERVER[$key];
+  }
+
+  if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+    return (string)$_ENV[$key];
+  }
+
+  if (isset($dotenv[$key]) && $dotenv[$key] !== '') {
+    return (string)$dotenv[$key];
+  }
+
+  return $fallback;
+}
+
+// prefer environment variables (set via docker-compose/.env); fall back to settings.ini values
+$pageTitle = env_value('PAGE_TITLE', $page['title'] ?? 'PHP Changelog (SQLite)');
+$pageDesc  = env_value('PAGE_DESCRIPTION', $page['description'] ?? '');
+
+$stylesheet = env_value('STYLESHEET', $cfg['stylesheet'] ?? 'styles.css');
 $candidate = __DIR__ . '/assets/' . $stylesheet;
 $stylesheetUrl = file_exists($candidate) ? '/assets/' . $stylesheet : '/assets/styles.css';
 
-$companyName = getenv('COMPANY_NAME') ?: ($cfg['company_name'] ?? '');
-$companyLogo = getenv('COMPANY_LOGO') ?: ($cfg['company_logo'] ?? '');
+$companyName = env_value('COMPANY_NAME', $cfg['company_name'] ?? '');
+$companyLogo = env_value('COMPANY_LOGO', $cfg['company_logo'] ?? '');
 $logoPath = __DIR__ . '/assets/' . $companyLogo;
 $companyLogoUrl = ($companyLogo && file_exists($logoPath)) ? '/assets/' . $companyLogo : '';
-$companyUrl = getenv('COMPANY_URL') ?: ($cfg['company_url'] ?? '');
-$contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
-$tinyMceApiKey = trim((string)(getenv('TINYMCE_API_KEY') ?: ''));
+$companyUrl = env_value('COMPANY_URL', $cfg['company_url'] ?? '');
+$contactEmail = env_value('CONTACT_EMAIL', $cfg['contact_email'] ?? '');
+$tinyMceApiKey = trim(env_value('TINYMCE_API_KEY', ''));
 $tinyMceApiKey = trim($tinyMceApiKey, "\"' ");
 if ($tinyMceApiKey === '') {
   $tinyMceApiKey = 'no-api-key';
