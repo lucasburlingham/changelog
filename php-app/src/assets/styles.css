@@ -47,6 +47,13 @@ button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;bo
 .popular-tag:hover{background:#eaf2ff}
 .popular-tag .count{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:999px;font-size:11px;color:#111;margin-left:6px}
 
+/* popular submitters list shown below the submitter input */
+.popular-submitters{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.popular-submitter{background:#fff3cd;border:1px solid #ffeaa7;padding:6px 8px;border-radius:999px;cursor:pointer;font-size:13px;color:#856404;display:inline-flex;gap:8px;align-items:center}
+.popular-submitter:hover{background:#ffe0a3}
+.popular-submitter .count{background:rgba(0,0,0,.08);padding:2px 6px;border-radius:999px;font-size:11px;color:#333;margin-left:6px}
+.popular-submitter.light{box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06)}
+
 /* 12-column layout: 1 blank | 3 submission | 4 entries | 3 filter | 1 blank */
 .layout-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:start}
 .left-column{grid-column:2/5}

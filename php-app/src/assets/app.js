@@ -238,6 +238,12 @@ async function loadTagSuggestions(){
   try{ const res = await fetch('/api/tags.php'); tagSuggestions = await res.json(); }catch(e){ tagSuggestions = []; }
 }
 
+// Submitter suggestions (populated from /api/submitters.php)
+let submitterSuggestions = [];
+async function loadSubmitterSuggestions(){
+  try{ const res = await fetch('/api/submitters.php'); submitterSuggestions = await res.json(); }catch(e){ submitterSuggestions = []; }
+}
+
 function attachTagSuggestor(input){
   const wrapper = document.createElement('div');
   input.parentNode.insertBefore(wrapper, input.nextSibling);
@@ -314,6 +320,27 @@ function renderPopularTags(){
   });
 }
 
+function addSubmitterToInput(input, submitter){
+  input.value = submitter;
+  input.focus();
+}
+
+function renderPopularSubmitters(containerId, formInputSelector){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const used = submitterSuggestions.filter(s=> (s.count||0) > 0).sort((a,b)=> (b.count||0) - (a.count||0) || a.submitter.localeCompare(b.submitter));
+  if(!used.length){ container.innerHTML=''; return; }
+  container.innerHTML = used.map(s=>{
+    return `<button type="button" class="popular-submitter" data-submitter="${escapeHtml(s.submitter)}"><span class="label">${escapeHtml(s.submitter)}</span><span class="count">${s.count||0}</span></button>`;
+  }).join('');
+  container.querySelectorAll('.popular-submitter').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ 
+      e.preventDefault(); 
+      addSubmitterToInput(document.querySelector(formInputSelector), btn.dataset.submitter); 
+    });
+  });
+}
+
 function renderEntries(list){
   const container = document.getElementById('entries');
   container.innerHTML = '';
@@ -367,6 +394,11 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   attachTagSuggestor(filterForm.querySelector('input[name="tags"]'));
   renderPopularTags();
 
+  // load server submitter list and render popular submitters
+  await loadSubmitterSuggestions();
+  renderPopularSubmitters('popularSubmittersEntry', '#entryForm input[name="submitter"]');
+  renderPopularSubmitters('popularSubmittersFilter', '#filterForm input[name="submitter"]');
+
   entryForm.addEventListener('submit', async e=>{
     e.preventDefault();
     const editor = getDescriptionEditor();
@@ -386,7 +418,10 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       entryForm.reset();
       clearDescriptionEditor();
       await loadTagSuggestions(); // refresh counts
+      await loadSubmitterSuggestions(); // refresh counts
       renderPopularTags();
+      renderPopularSubmitters('popularSubmittersEntry', '#entryForm input[name="submitter"]');
+      renderPopularSubmitters('popularSubmittersFilter', '#filterForm input[name="submitter"]');
       loadAndShow(Object.fromEntries(new FormData(filterForm)));
     }catch(err){ alert('Error: '+err.message); }
   });

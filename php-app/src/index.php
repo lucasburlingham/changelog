@@ -122,6 +122,7 @@ $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tin
             <label>Title <input name="title" required></label>
             <label>Description <textarea id="entryDescription" name="description" required></textarea></label>
             <label>Submitter <input name="submitter"></label>
+            <div id="popularSubmittersEntry" class="popular-submitters" aria-live="polite"></div>
             <label>Tags (comma separated) <input name="tags"></label>
             <div id="popularTags" class="popular-tags" aria-live="polite"></div>
             <button type="submit">Submit</button>
@@ -143,6 +144,7 @@ $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tin
             <label>From <input type="datetime-local" name="from"></label>
             <label>To <input type="datetime-local" name="to"></label>
             <label>Submitter <input name="submitter"></label>
+            <div id="popularSubmittersFilter" class="popular-submitters" aria-live="polite"></div>
             <label>Tags (comma separated) <input name="tags"></label>
             <div class="controls">
               <select name="sort">
