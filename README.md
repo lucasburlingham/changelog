@@ -6,6 +6,7 @@ A small server-backed changelog application with a browser UI and a tiny JSON AP
 
 - Submit changelog entries (title, rich-text description, submitter, tags)
 - Paste, drag, or insert inline screenshots and photos inside entry descriptions
+- TinyMCE rich-text editor with configurable Cloud API key fallback
 - List and filter entries by date range (`from` / `to`), `submitter`, and `tags`
 - Persisted storage using SQLite (`php-app/data/changelog.db`)
 - Lightweight JSON API for automation or scripting
@@ -35,6 +36,7 @@ Available variables (defaults shown):
 - `PAGE_TITLE` — page title (default: `Changelog`)
 - `PAGE_DESCRIPTION` — meta description (default: `Changelog of the project`)
 - `STYLESHEET` — stylesheet filename in `src/assets/` (default: `styles.css`)
+- `TINYMCE_API_KEY` — Tiny Cloud API key used only when the local TinyMCE bundle is unavailable (default: empty, which falls back to `no-api-key`)
 - `COMPANY_NAME` — company name shown in the footer (default: `My Company`)
 - `COMPANY_LOGO` — logo filename in `src/assets/` (default: `logo.png`)
 - `COMPANY_URL` — link for the company name (default: `https://www.mycompany.com`)
@@ -42,6 +44,11 @@ Available variables (defaults shown):
 - `CLOUDFLARE_TUNNEL_TOKEN` — if set, the app will attempt to create a Cloudflare Tunnel on startup using this token (see `cloudflared` docs for details)
 
 Docker Compose will load `.env` automatically (see the `env_file` entry in `docker-compose.yml`).
+
+TinyMCE loading behavior:
+
+- If `php-app/src/assets/tinymce/js/tinymce/tinymce.min.js` exists, the app serves the local TinyMCE bundle and no API key is needed.
+- If the local loader is missing, the page falls back to Tiny Cloud and uses `TINYMCE_API_KEY` from `.env`.
 
 ---
 
@@ -93,6 +100,12 @@ Notes: API responses are JSON. There is no authentication or CORS headers by def
 - Uploaded images are stored in `php-app/src/data/uploads/` and referenced from entry HTML as `/data/uploads/<random-name>.<ext>`.
 - Tags in the DB are stored as a CSV string with surrounding commas (e.g. `,bug,ui,`) to allow fast LIKE-based matching.
 - `timestamp` is stored as milliseconds since the UNIX epoch.
+
+Rich-text editor notes:
+
+- Descriptions support headings, lists, links, tables, and inline uploaded images.
+- Images can be pasted from the clipboard, dragged into the editor, or inserted with the TinyMCE image toolbar button.
+- Uploaded images are limited to `png`, `jpg`, `jpeg`, `gif`, and `webp` up to 10 MB.
 
 ---
 
