@@ -75,7 +75,7 @@ function env_value(string $key, string $fallback = ''): string {
 }
 
 // prefer environment variables (set via docker-compose/.env); fall back to settings.ini values
-$pageTitle = env_value('PAGE_TITLE', $page['title'] ?? 'PHP Changelog (SQLite)');
+$pageTitle = env_value('PAGE_TITLE', $page['title'] ?? 'PHP Changelog');
 $pageDesc  = env_value('PAGE_DESCRIPTION', $page['description'] ?? '');
 
 $stylesheet = env_value('STYLESHEET', $cfg['stylesheet'] ?? 'styles.css');

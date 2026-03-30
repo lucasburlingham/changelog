@@ -56,6 +56,58 @@ function sanitizeUrl(value){
   }
 }
 
+function sanitizeImageSrc(value){
+  const rawValue = String(value || '').trim();
+  if(!rawValue) return '';
+
+  // Allow data URLs for common raster image types only.
+  if(/^data:image\/(png|jpe?g|gif|webp|bmp|avif);base64,[a-z0-9+/=\s]+$/i.test(rawValue)){
+    return rawValue.replace(/\s+/g, '');
+  }
+
+  // TinyMCE can emit blob URLs for local inserts.
+  if(rawValue.startsWith('blob:')){
+    try{
+      const url = new URL(rawValue);
+      return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+    }catch{
+      return '';
+    }
+  }
+
+  return sanitizeUrl(rawValue);
+}
+
+function blobToDataUrl(blob){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(String(reader.result || ''));
+    reader.onerror = ()=> reject(new Error('Failed to convert blob image to data URL.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function normalizeImageSources(html){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html || ''}</div>`, 'text/html');
+  const sourceRoot = doc.body.firstElementChild || doc.body;
+  const images = Array.from(sourceRoot.querySelectorAll('img[src^="blob:"]'));
+
+  for(const img of images){
+    const src = img.getAttribute('src') || '';
+    try{
+      const res = await fetch(src);
+      if(!res.ok) continue;
+      const dataUrl = await blobToDataUrl(await res.blob());
+      if(dataUrl) img.setAttribute('src', dataUrl);
+    }catch{
+      // If conversion fails, keep the original source and let sanitizer handle it.
+    }
+  }
+
+  return sourceRoot.innerHTML;
+}
+
 function sanitizeRichTextHtml(html){
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<div>${html || ''}</div>`, 'text/html');
@@ -89,7 +141,7 @@ function sanitizeRichTextHtml(html){
     }
 
     if(tagName === 'img'){
-      const src = sanitizeUrl(node.getAttribute('src'));
+      const src = sanitizeImageSrc(node.getAttribute('src'));
       if(!src) return;
       safeElement.setAttribute('src', src);
 
@@ -320,7 +372,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     const editor = getDescriptionEditor();
     if(editor) editor.save();
     const v = readForm(entryForm);
-    const description = sanitizeRichTextHtml(v.description);
+    const normalizedDescription = await normalizeImageSources(v.description);
+    const description = sanitizeRichTextHtml(normalizedDescription);
     if(isRichTextBlank(description)){
       alert('Description is required.');
       focusDescriptionEditor();
