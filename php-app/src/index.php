@@ -30,10 +30,7 @@ $companyLogoUrl = ($companyLogo && file_exists($logoPath)) ? '/assets/' . $compa
 $companyUrl = getenv('COMPANY_URL') ?: ($cfg['company_url'] ?? '');
 $contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
 $tinyMceApiKey = getenv('TINYMCE_API_KEY') ?: 'no-api-key';
-$tinyMceLocalLoader = __DIR__ . '/assets/tinymce/js/tinymce/tinymce.min.js';
-$tinyMceUrl = file_exists($tinyMceLocalLoader)
-  ? '/assets/tinymce/js/tinymce/tinymce.min.js'
-  : 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tinymce/7/tinymce.min.js';
+$tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tinymce/8/tinymce.min.js';
 ?>
 
 <!doctype html>
@@ -116,7 +113,7 @@ $tinyMceUrl = file_exists($tinyMceLocalLoader)
     </footer>
   <?php endif; ?>
 
-  <script src="<?php echo htmlspecialchars($tinyMceUrl, ENT_QUOTES, 'UTF-8'); ?>" referrerpolicy="origin"></script>
+  <script src="<?php echo htmlspecialchars($tinyMceUrl, ENT_QUOTES, 'UTF-8'); ?>" referrerpolicy="origin" crossorigin="anonymous"></script>
   <script src="/assets/app.js"></script>
 </body>
 </html>

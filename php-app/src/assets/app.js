@@ -22,21 +22,38 @@ async function initDescriptionEditor(){
   const existingEditor = getDescriptionEditor();
   if(existingEditor) return existingEditor;
 
+  const submitterInput = document.querySelector('#entryForm input[name="submitter"]');
+
   const editors = await window.tinymce.init({
     selector: '#entryDescription',
-    height: 280,
+    height: 320,
     menubar: false,
     branding: false,
     promotion: false,
     browser_spellcheck: true,
-    statusbar: false,
-    plugins: 'lists link table preview wordcount searchreplace quickbars',
-    toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link blockquote table | removeformat | searchreplace preview',
-    block_formats: 'Paragraph=p; Heading 2=h2; Heading 3=h3; Heading 4=h4',
+    plugins: [
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'uploadcare', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown', 'importword', 'exportword', 'exportpdf'
+    ],
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    tinycomments_mode: 'embedded',
+    tinycomments_author: (submitterInput && submitterInput.value.trim()) || 'Author name',
+    mergetags_list: [
+      { value: 'First.Name', title: 'First Name' },
+      { value: 'Email', title: 'Email' }
+    ],
+    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
+    uploadcare_public_key: '120a7859027a4d1d9177',
     content_style: 'body { font-family: Segoe UI, Roboto, Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
     setup(editor){
       const syncEditor = ()=> editor.save();
       editor.on('change input undo redo setcontent', syncEditor);
+
+      if(submitterInput){
+        submitterInput.addEventListener('input', ()=>{
+          editor.options.set('tinycomments_author', submitterInput.value.trim() || 'Author name');
+        });
+      }
     }
   });
 
