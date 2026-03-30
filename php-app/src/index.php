@@ -29,7 +29,11 @@ $logoPath = __DIR__ . '/assets/' . $companyLogo;
 $companyLogoUrl = ($companyLogo && file_exists($logoPath)) ? '/assets/' . $companyLogo : '';
 $companyUrl = getenv('COMPANY_URL') ?: ($cfg['company_url'] ?? '');
 $contactEmail = getenv('CONTACT_EMAIL') ?: ($cfg['contact_email'] ?? '');
-$tinyMceApiKey = getenv('TINYMCE_API_KEY') ?: 'no-api-key';
+$tinyMceApiKey = trim((string)(getenv('TINYMCE_API_KEY') ?: ''));
+$tinyMceApiKey = trim($tinyMceApiKey, "\"' ");
+if ($tinyMceApiKey === '') {
+  $tinyMceApiKey = 'no-api-key';
+}
 $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tinymce/8/tinymce.min.js';
 ?>
 
