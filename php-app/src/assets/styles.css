@@ -16,6 +16,7 @@ button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;bo
 .entry .description ul,.entry .description ol{padding-left:22px}
 .entry .description blockquote{border-left:3px solid #d1d5db;padding-left:12px;color:#374151}
 .entry .description pre{background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;padding:10px;overflow:auto}
+.entry .description img{display:block;max-width:100%;height:auto;border-radius:6px;margin:8px 0}
 .entry .description table{width:100%;border-collapse:collapse}
 .entry .description th,.entry .description td{border:1px solid #e5e7eb;padding:8px;vertical-align:top}
 .entry .description a{color:var(--accent)}

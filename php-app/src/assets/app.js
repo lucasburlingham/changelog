@@ -30,9 +30,9 @@ async function initDescriptionEditor(){
     promotion: false,
     browser_spellcheck: true,
     plugins: [
-      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount'
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount'
     ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
     content_style: 'body { font-family: Segoe UI, Roboto, Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
     setup(editor){
       const syncEditor = ()=> editor.save();
@@ -62,7 +62,7 @@ function sanitizeRichTextHtml(html){
   const sourceRoot = doc.body.firstElementChild || doc.body;
   const safeDoc = document.implementation.createHTMLDocument('sanitized');
   const safeRoot = safeDoc.createElement('div');
-  const allowedTags = new Set(['a', 'blockquote', 'br', 'code', 'em', 'h2', 'h3', 'h4', 'hr', 'li', 'ol', 'p', 'pre', 's', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'u', 'ul']);
+  const allowedTags = new Set(['a', 'blockquote', 'br', 'code', 'em', 'h2', 'h3', 'h4', 'hr', 'img', 'li', 'ol', 'p', 'pre', 's', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'u', 'ul']);
 
   function sanitizeNode(node, parent){
     if(node.nodeType === Node.TEXT_NODE){
@@ -86,6 +86,30 @@ function sanitizeRichTextHtml(html){
         safeElement.setAttribute('target', '_blank');
         safeElement.setAttribute('rel', 'noopener noreferrer');
       }
+    }
+
+    if(tagName === 'img'){
+      const src = sanitizeUrl(node.getAttribute('src'));
+      if(!src) return;
+      safeElement.setAttribute('src', src);
+
+      const alt = (node.getAttribute('alt') || '').trim();
+      if(alt) safeElement.setAttribute('alt', alt.slice(0, 300));
+
+      const width = node.getAttribute('width');
+      if(width && /^\d+$/.test(width)) safeElement.setAttribute('width', width);
+
+      const height = node.getAttribute('height');
+      if(height && /^\d+$/.test(height)) safeElement.setAttribute('height', height);
+
+      const title = (node.getAttribute('title') || '').trim();
+      if(title) safeElement.setAttribute('title', title.slice(0, 300));
+
+      const loading = (node.getAttribute('loading') || '').toLowerCase();
+      if(loading === 'lazy' || loading === 'eager') safeElement.setAttribute('loading', loading);
+
+      parent.appendChild(safeElement);
+      return;
     }
 
     if(tagName === 'td' || tagName === 'th'){
