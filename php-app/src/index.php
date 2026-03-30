@@ -58,6 +58,7 @@ $tinyMceUrl = file_exists($tinyMceLocalLoader)
       <form id="entryForm">
         <label>Title <input name="title" required></label>
         <label>Description <textarea id="entryDescription" name="description" required></textarea></label>
+        <p class="meta form-note">Paste screenshots, drag images into the editor, or use the image button to place them inline.</p>
         <label>Submitter <input name="submitter"></label>
         <label>Tags (comma separated) <input name="tags"></label>
         <div id="popularTags" class="popular-tags" aria-live="polite"></div>

@@ -5,6 +5,7 @@ A small server-backed changelog application with a browser UI and a tiny JSON AP
 ✅ Key features
 
 - Submit changelog entries (title, rich-text description, submitter, tags)
+- Paste, drag, or insert inline screenshots and photos inside entry descriptions
 - List and filter entries by date range (`from` / `to`), `submitter`, and `tags`
 - Persisted storage using SQLite (`php-app/data/changelog.db`)
 - Lightweight JSON API for automation or scripting
@@ -48,6 +49,7 @@ Docker Compose will load `.env` automatically (see the `env_file` entry in `dock
 
 - `php-app/src/` — PHP web UI (`/`) and API endpoints under `/api`
   - `api/entries.php` — GET (list/filter) and POST (create)
+  - `api/uploads.php` — POST image uploads for inline editor images
   - `api/tags.php` — returns tags from the data directory (`php-app/src/data/tags.csv` by default)
 - `php-app/data/` — runtime data (SQLite DB)
 - `compose.yml` — runs the PHP app with a bind mount for `src` and `data`
@@ -61,6 +63,11 @@ Docker Compose will load `.env` automatically (see the `env_file` entry in `dock
   - Required: `title`. Optional: `description`, `submitter`, `tags` (array or comma-separated), `timestamp` (ms or ISO).
   - `description` may contain sanitized HTML from the rich-text editor.
   - Returns created entry (JSON) with `id` and `timestamp` (milliseconds).
+
+- POST /api/uploads.php
+  - Upload an inline editor image using `multipart/form-data` with a `file` field.
+  - Accepts `png`, `jpg`, `jpeg`, `gif`, and `webp` up to 10 MB.
+  - Returns JSON including `location`, which is the image URL TinyMCE inserts into the description.
 
 - GET /api/entries.php
   - List entries. Query params:
@@ -83,6 +90,7 @@ Notes: API responses are JSON. There is no authentication or CORS headers by def
 ## Data format & storage
 
 - Database: `php-app/data/changelog.db` (SQLite). Table `entries` stores: `id`, `title`, `description`, `submitter`, `tags`, `timestamp`.
+- Uploaded images are stored in `php-app/src/data/uploads/` and referenced from entry HTML as `/data/uploads/<random-name>.<ext>`.
 - Tags in the DB are stored as a CSV string with surrounding commas (e.g. `,bug,ui,`) to allow fast LIKE-based matching.
 - `timestamp` is stored as milliseconds since the UNIX epoch.
 

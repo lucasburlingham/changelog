@@ -4,6 +4,32 @@ async function apiFetch(path, opts={}){
   return res.json();
 }
 
+async function uploadEditorImage(blobInfo, progress){
+  const formData = new FormData();
+  formData.append('file', blobInfo.blob(), blobInfo.filename());
+  progress(10);
+
+  const res = await fetch('/api/uploads.php', {
+    method: 'POST',
+    body: formData
+  });
+
+  let data = null;
+  try{
+    data = await res.json();
+  }catch{
+    data = null;
+  }
+
+  if(!res.ok) throw new Error(data && data.error ? data.error : 'Image upload failed.');
+  if(!data || typeof data.location !== 'string' || data.location.trim() === ''){
+    throw new Error('Image upload did not return a location.');
+  }
+
+  progress(100);
+  return data.location;
+}
+
 function readForm(form){
   const fd = new FormData(form);
   const out = {};
@@ -30,9 +56,15 @@ async function initDescriptionEditor(){
     promotion: false,
     browser_spellcheck: true,
     statusbar: false,
-    plugins: 'lists link table preview wordcount searchreplace quickbars',
-    toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link blockquote table | removeformat | searchreplace preview',
+    plugins: 'image lists link table preview wordcount searchreplace quickbars',
+    toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link image blockquote table | removeformat | searchreplace preview',
     block_formats: 'Paragraph=p; Heading 2=h2; Heading 3=h3; Heading 4=h4',
+    automatic_uploads: true,
+    images_file_types: 'jpg,jpeg,png,gif,webp',
+    images_upload_handler: uploadEditorImage,
+    paste_data_images: true,
+    file_picker_types: 'image',
+    image_caption: true,
     content_style: 'body { font-family: Segoe UI, Roboto, Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
     setup(editor){
       const syncEditor = ()=> editor.save();
@@ -56,13 +88,26 @@ function sanitizeUrl(value){
   }
 }
 
+function sanitizeImageUrl(value){
+  const rawValue = String(value || '').trim();
+  if(!rawValue) return '';
+
+  try{
+    const url = new URL(rawValue, window.location.origin);
+    if(url.origin !== window.location.origin) return '';
+    return /^\/data\/uploads\/[a-f0-9]+\.(?:png|jpe?g|gif|webp)$/i.test(url.pathname) ? url.pathname : '';
+  }catch{
+    return '';
+  }
+}
+
 function sanitizeRichTextHtml(html){
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<div>${html || ''}</div>`, 'text/html');
   const sourceRoot = doc.body.firstElementChild || doc.body;
   const safeDoc = document.implementation.createHTMLDocument('sanitized');
   const safeRoot = safeDoc.createElement('div');
-  const allowedTags = new Set(['a', 'blockquote', 'br', 'code', 'em', 'h2', 'h3', 'h4', 'hr', 'li', 'ol', 'p', 'pre', 's', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'u', 'ul']);
+  const allowedTags = new Set(['a', 'blockquote', 'br', 'code', 'em', 'figcaption', 'figure', 'h2', 'h3', 'h4', 'hr', 'img', 'li', 'ol', 'p', 'pre', 's', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'u', 'ul']);
 
   function sanitizeNode(node, parent){
     if(node.nodeType === Node.TEXT_NODE){
@@ -86,6 +131,23 @@ function sanitizeRichTextHtml(html){
         safeElement.setAttribute('target', '_blank');
         safeElement.setAttribute('rel', 'noopener noreferrer');
       }
+    }
+
+    if(tagName === 'img'){
+      const src = sanitizeImageUrl(node.getAttribute('src'));
+      if(!src) return;
+      safeElement.setAttribute('src', src);
+
+      const alt = String(node.getAttribute('alt') || '').trim();
+      if(alt) safeElement.setAttribute('alt', alt);
+
+      ['width', 'height'].forEach(attr => {
+        const value = node.getAttribute(attr);
+        if(value && /^\d+$/.test(value)) safeElement.setAttribute(attr, value);
+      });
+
+      parent.appendChild(safeElement);
+      return;
     }
 
     if(tagName === 'td' || tagName === 'th'){
@@ -112,7 +174,7 @@ function isRichTextBlank(html){
   if(!html) return true;
   const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
   const text = (doc.body.textContent || '').replace(/\u00a0/g, ' ').trim();
-  return text === '' && !doc.body.querySelector('hr, table');
+  return text === '' && !doc.body.querySelector('hr, table, img');
 }
 
 function clearDescriptionEditor(){
