@@ -1,6 +1,7 @@
-:root{--bg:#f6f8fb;--card:#fff;--accent:#0366d6;--muted:#6b7280}
+:root{--bg:#f6f8fb;--card:#fff;--accent:#0366d6;--muted:#6b7280;--text:#111;--border:#e5e7eb}
+:root.dark-mode{--bg:#1a1a1a;--card:#2d2d2d;--accent:#58a6ff;--muted:#8b949e;--text:#e6edf3;--border:#30363d}
 *{box-sizing:border-box;font-family:Segoe UI,Roboto,Arial,sans-serif}
-body{margin:0;background:var(--bg);color:#111}
+body{margin:0;background:var(--bg);color:var(--text);transition:background 0.2s,color 0.2s}
 .container{max-width:1600px;margin:28px auto;padding:20px;width:100%}
 @media(max-width:1600px){.container{max-width:1400px;padding:16px}}
 @media(max-width:1200px){.container{max-width:100%;padding:16px}}
@@ -8,24 +9,24 @@ body{margin:0;background:var(--bg);color:#111}
 .card{background:var(--card);padding:14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-bottom:12px}
 label{display:block;margin:8px 0}
 input,textarea,button,select{font:inherit}
-input,textarea,select{width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+input,textarea,select{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);background:var(--card);color:var(--text)}
 textarea{min-height:80px}
 button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;border:none;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.12)}
-#entries .entry{border-top:1px solid #eee;padding:10px 0}
+#entries .entry{border-top:1px solid var(--border);padding:10px 0}
 .entry .description{overflow-wrap:anywhere;line-height:1.6}
 .entry .description > :first-child{margin-top:0}
 .entry .description > :last-child{margin-bottom:0}
 .entry .description p,.entry .description ul,.entry .description ol,.entry .description blockquote,.entry .description pre,.entry .description table,.entry .description h2,.entry .description h3,.entry .description h4{margin:0 0 12px}
 .entry .description ul,.entry .description ol{padding-left:22px}
-.entry .description blockquote{border-left:3px solid #d1d5db;padding-left:12px;color:#374151}
-.entry .description pre{background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;padding:10px;overflow:auto}
+.entry .description blockquote{border-left:3px solid var(--border);padding-left:12px;color:var(--muted)}
+.entry .description pre{background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;padding:10px;overflow:auto}
 .entry .description img{display:block;max-width:100%;height:auto;border-radius:6px;margin:8px 0}
 .entry .description table{width:100%;border-collapse:collapse}
-.entry .description th,.entry .description td{border:1px solid #e5e7eb;padding:8px;vertical-align:top}
+.entry .description th,.entry .description td{border:1px solid var(--border);padding:8px;vertical-align:top}
 .entry .description a{color:var(--accent)}
 .meta{font-size:12px;color:var(--muted)}
 .tags{margin-top:6px}
-.tag{display:inline-block;background:#eef6ff;color:var(--accent);padding:3px 8px;border-radius:999px;margin-right:6px;font-size:12px}
+.tag{display:inline-block;background:rgba(3,102,214,0.1);color:var(--accent);padding:3px 8px;border-radius:999px;margin-right:6px;font-size:12px}
 .tox-tinymce{margin-top:8px;border:1px solid #e5e7eb !important;border-radius:6px !important}
 
 /* visual tweak for very light/low-contrast tag backgrounds */
@@ -35,23 +36,23 @@ button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:6px;bo
 .controls > *{flex:1}
 
 /* tag suggestions */
-.tag-suggestions-list{position:relative;background:#fff;border:1px solid #e5e7eb;border-radius:6px;margin-top:6px;box-shadow:0 8px 24px rgba(2,6,23,.12);z-index:30}
+.tag-suggestions-list{position:relative;background:var(--card);border:1px solid var(--border);border-radius:6px;margin-top:6px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:30}
 .tag-suggestion{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer}
-.tag-suggestion:hover,.tag-suggestion.selected{background:#f3f7ff}
+.tag-suggestion:hover,.tag-suggestion.selected{background:rgba(3,102,214,0.15)}
 .tag-suggestion .swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.08);flex:0 0 12px}
-.tag-suggestion .label{font-size:13px;color:#111}
+.tag-suggestion .label{font-size:13px;color:var(--text)}
 
 /* previously-used / popular tags list shown below the tags input */
 .popular-tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
-.popular-tag{background:#f3f7ff;border:1px solid #e6eefc;padding:6px 8px;border-radius:999px;cursor:pointer;font-size:13px;color:var(--accent);display:inline-flex;gap:8px;align-items:center}
-.popular-tag:hover{background:#eaf2ff}
-.popular-tag .count{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:999px;font-size:11px;color:#111;margin-left:6px}
+.popular-tag{background:rgba(3,102,214,0.1);border:1px solid rgba(3,102,214,0.2);padding:6px 8px;border-radius:999px;cursor:pointer;font-size:13px;color:var(--accent);display:inline-flex;gap:8px;align-items:center}
+.popular-tag:hover{background:rgba(3,102,214,0.15)}
+.popular-tag .count{background:rgba(0,0,0,.2);padding:2px 6px;border-radius:999px;font-size:11px;color:var(--text);margin-left:6px}
 
 /* popular submitters list shown below the submitter input */
 .popular-submitters{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
-.popular-submitter{background:#fff3cd;border:1px solid #ffeaa7;padding:6px 8px;border-radius:999px;cursor:pointer;font-size:13px;color:#856404;display:inline-flex;gap:8px;align-items:center}
-.popular-submitter:hover{background:#ffe0a3}
-.popular-submitter .count{background:rgba(0,0,0,.08);padding:2px 6px;border-radius:999px;font-size:11px;color:#333;margin-left:6px}
+.popular-submitter{background:rgba(255,184,28,0.2);border:1px solid rgba(255,184,28,0.4);padding:6px 8px;border-radius:999px;cursor:pointer;font-size:13px;color:#ff9800;display:inline-flex;gap:8px;align-items:center}
+.popular-submitter:hover{background:rgba(255,184,28,0.3)}
+.popular-submitter .count{background:rgba(0,0,0,.2);padding:2px 6px;border-radius:999px;font-size:11px;color:var(--text);margin-left:6px}
 .popular-submitter.light{box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06)}
 
 /* 12-column layout: 1 blank | 3 submission | 4 entries | 3 filter | 1 blank */

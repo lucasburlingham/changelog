@@ -109,10 +109,15 @@ $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tin
 </head>
 <body>
   <main class="container">
-    <h1><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></h1>
-    <?php if ($pageDesc): ?>
-      <p class="meta"><?php echo htmlspecialchars($pageDesc, ENT_QUOTES, 'UTF-8'); ?></p>
-    <?php endif; ?>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h1><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></h1>
+        <?php if ($pageDesc): ?>
+          <p class="meta"><?php echo htmlspecialchars($pageDesc, ENT_QUOTES, 'UTF-8'); ?></p>
+        <?php endif; ?>
+      </div>
+      <button id="darkModeToggle" aria-label="Toggle dark mode" style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px;border-radius:6px;transition:background 0.2s" title="Toggle dark mode">☀️</button>
+    </div>
 
     <div class="layout-grid">
       <div class="left-column">

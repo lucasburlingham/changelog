@@ -1,3 +1,30 @@
+// Dark mode toggle
+function initDarkMode(){
+  const toggle = document.getElementById('darkModeToggle');
+  const isDarkMode = localStorage.getItem('darkMode') === 'true' || window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  function setDarkMode(isDark){
+    if(isDark){
+      document.documentElement.classList.add('dark-mode');
+      localStorage.setItem('darkMode', 'true');
+      toggle.textContent = '🌙';
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+      localStorage.setItem('darkMode', 'false');
+      toggle.textContent = '☀️';
+    }
+  }
+  
+  setDarkMode(isDarkMode);
+  toggle.addEventListener('click', ()=> setDarkMode(!document.documentElement.classList.contains('dark-mode')));
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initDarkMode);
+} else {
+  initDarkMode();
+}
+
 async function apiFetch(path, opts={}){
   const res = await fetch(path, Object.assign({headers:{'Content-Type':'application/json'}}, opts));
   if(!res.ok) throw new Error(await res.text());
