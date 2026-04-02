@@ -192,6 +192,7 @@ $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tin
   </footer>
 
   <script src="<?php echo htmlspecialchars($tinyMceUrl, ENT_QUOTES, 'UTF-8'); ?>" referrerpolicy="origin" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script src="/assets/app.js"></script>
 </body>
 </html>

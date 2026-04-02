@@ -236,6 +236,44 @@ function focusDescriptionEditor(){
   if(textarea) textarea.focus();
 }
 
+async function initInlineEntryEditors(scope=document){
+  if(!window.tinymce) return;
+  const textareas = Array.from(scope.querySelectorAll('textarea.entry-edit-description')).filter(el => el.dataset.richReady !== '1');
+  for(const textarea of textareas){
+    textarea.dataset.richReady = '1';
+    try{
+      await window.tinymce.init({
+        target: textarea,
+        height: 240,
+        menubar: false,
+        branding: false,
+        promotion: false,
+        browser_spellcheck: true,
+        plugins: ['anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount'],
+        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+        content_style: 'body { font-family: Segoe UI, Roboto, Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
+        setup(editor){
+          const syncEditor = ()=> editor.save();
+          editor.on('change input undo redo setcontent', syncEditor);
+        }
+      });
+    }catch(err){
+      console.error('Failed to initialize inline editor', err);
+      textarea.dataset.richReady = '0';
+    }
+  }
+}
+
+function teardownInlineEntryEditors(scope=document){
+  if(!window.tinymce) return;
+  const textareas = Array.from(scope.querySelectorAll('textarea.entry-edit-description'));
+  textareas.forEach(textarea=>{
+    if(!textarea.id) return;
+    const editor = window.tinymce.get(textarea.id);
+    if(editor) editor.remove();
+  });
+}
+
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]||c)); }
 // Choose readable text color (black or white) for a hex color (expects "rrggbb" or "#rrggbb")
 function pickTextColor(hex){
@@ -381,6 +419,15 @@ function renderEntries(list, append=false){
   if(!append && !list.length) { container.innerHTML = '<p>No entries</p>'; return; }
   list.forEach(e=>{
     const div = document.createElement('div'); div.className='entry';
+    if(e.id && window.htmx){
+      div.id = `entry-${e.id}`;
+      div.classList.add('is-editable');
+      div.setAttribute('hx-get', `/api/entries.php?id=${encodeURIComponent(e.id)}&format=html&mode=edit`);
+      div.setAttribute('hx-trigger', 'dblclick');
+      div.setAttribute('hx-target', 'this');
+      div.setAttribute('hx-swap', 'outerHTML');
+      div.title = 'Double-click to edit date and body';
+    }
     const title = document.createElement('div'); title.innerHTML = `<strong>${escapeHtml(e.title)}</strong>`;
     const meta = document.createElement('div'); meta.className='meta';
     const d = new Date(e.timestamp);
@@ -400,6 +447,7 @@ function renderEntries(list, append=false){
     });
     div.appendChild(title); div.appendChild(meta); div.appendChild(desc); div.appendChild(tags);
     container.appendChild(div);
+    if(window.htmx) window.htmx.process(div);
   });
 }
 
@@ -523,6 +571,32 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       loadNextEntriesBatch(entriesQueryVersion).catch(err=>{
         console.error('Failed to load additional entries', err);
       });
+    }
+  });
+
+  document.body.addEventListener('htmx:beforeSwap', event=>{
+    const elt = event.detail?.elt;
+    if(elt && elt.matches && elt.matches('.entry-edit-form')){
+      teardownInlineEntryEditors(elt);
+    }
+  });
+
+  document.body.addEventListener('htmx:afterSwap', event=>{
+    const target = event.detail?.target;
+    if(target && target.matches && target.matches('.entry-edit-form')){
+      initInlineEntryEditors(target);
+      return;
+    }
+
+    if(target && target.querySelector){
+      initInlineEntryEditors(target);
+    }
+  });
+
+  document.body.addEventListener('htmx:beforeRequest', event=>{
+    const trigger = event.detail?.elt;
+    if(trigger && trigger.closest && trigger.closest('.entry-edit-form') && window.tinymce){
+      window.tinymce.triggerSave();
     }
   });
 
