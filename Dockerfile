@@ -9,6 +9,6 @@ RUN mkdir -p /var/www/html/data \
     && chmod -R 755 /var/www/html
 
 # include optional php.ini (if present in repo)
-COPY php.ini /usr/local/etc/php/conf.d/php-app.ini
+COPY php.ini /usr/local/etc/php/conf.d/project.ini
 
 EXPOSE 80

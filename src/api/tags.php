@@ -8,7 +8,7 @@ header('Content-Type: application/json; charset=utf-8');
 $csvFile = __DIR__ . '/../data/tags.csv';
 if (!is_file($csvFile)) {
     // allow one more upward hop for CLI/test environments where the working
-    // directory might be `php-app/src` instead of the installed path.
+    // directory might be `src` instead of the installed path.
     $csvFile = __DIR__ . '/../../data/tags.csv';
 } 
 $known = [];

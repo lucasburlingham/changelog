@@ -88,7 +88,7 @@ paths:
       summary: List available tags
       responses:
         '200':
-          description: JSON array of tags (sourced from the data directory, e.g. `php-app/src/data/tags.csv`)
+          description: JSON array of tags (sourced from the data directory, e.g. `src/data/tags.csv`)
           content:
             application/json:
               schema:

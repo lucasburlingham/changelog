@@ -4,7 +4,7 @@
 $ini = [];
 $paths = [
   __DIR__ . '/settings.ini',
-  dirname(__DIR__, 2) . '/settings.ini'
+  dirname(__DIR__) . '/settings.ini'
 ];
 foreach ($paths as $path) {
   if (file_exists($path)) {
@@ -18,7 +18,6 @@ $cfg  = $ini['settings'] ?? [];
 // Fallback .env loading for non-Docker Apache deployments.
 $dotenv = [];
 $dotenvPaths = [
-  dirname(__DIR__, 2) . '/.env',
   dirname(__DIR__) . '/.env',
   __DIR__ . '/.env'
 ];

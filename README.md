@@ -51,9 +51,9 @@ Supported variables:
 
 - `PAGE_TITLE`
 - `PAGE_DESCRIPTION`
-- `STYLESHEET` (file under `php-app/src/assets/`)
+- `STYLESHEET` (file under `src/assets/`)
 - `COMPANY_NAME`
-- `COMPANY_LOGO` (file under `php-app/src/assets/`)
+- `COMPANY_LOGO` (file under `src/assets/`)
 - `COMPANY_URL`
 - `CONTACT_EMAIL`
 - `TINYMCE_API_KEY`
@@ -68,17 +68,16 @@ TinyMCE behavior:
 
 - `compose.yml` - Docker services (`php`, optional `cloudflare-tunnel`)
 - `openapi.yaml` - API spec for core endpoints (`entries`, `tags`)
-- `php-app/`
-- `php-app/Dockerfile` - PHP Apache image
-- `php-app/php.ini` - runtime PHP settings (upload size, memory, errors)
-- `php-app/src/index.php` - UI page and config loading
-- `php-app/src/api/entries.php` - create/list entries
-- `php-app/src/api/tags.php` - list tags with counts/colors
-- `php-app/src/api/submitters.php` - list submitters with counts
-- `php-app/src/api/uploads.php` - image upload endpoint
-- `php-app/src/assets/app.js` - frontend logic (editor, sanitize, filters)
-- `php-app/src/assets/styles.css` - UI styling
-- `php-app/src/data/` - runtime data (`changelog.db`, `tags.csv`, `submitters.csv`, `uploads/`)
+- `Dockerfile` - PHP Apache image
+- `php.ini` - runtime PHP settings (upload size, memory, errors)
+- `src/index.php` - UI page and config loading
+- `src/api/entries.php` - create/list entries
+- `src/api/tags.php` - list tags with counts/colors
+- `src/api/submitters.php` - list submitters with counts
+- `src/api/uploads.php` - image upload endpoint
+- `src/assets/app.js` - frontend logic (editor, sanitize, filters)
+- `src/assets/styles.css` - UI styling
+- `src/data/` - runtime data (`changelog.db`, `tags.csv`, `submitters.csv`, `uploads/`)
 
 ## API
 
@@ -111,7 +110,7 @@ Query params:
 
 Returns tag objects with usage counts, merged from:
 
-- `php-app/src/data/tags.csv` (or fallback path)
+- `src/data/tags.csv` (or fallback path)
 - tags found in `entries` table
 
 Shape:
@@ -126,7 +125,7 @@ Shape:
 
 Returns submitter objects with usage counts, merged from:
 
-- `php-app/src/data/submitters.csv` (or fallback path)
+- `src/data/submitters.csv` (or fallback path)
 - submitters found in `entries` table
 
 Shape:
@@ -144,7 +143,7 @@ Uploads an image file (`multipart/form-data`, field name: `file`).
 - Methods other than `POST` return `405`
 - Max size: 10 MB
 - Allowed MIME types: PNG, JPEG, GIF, WebP
-- Stores files under `php-app/src/data/uploads/`
+- Stores files under `src/data/uploads/`
 - Returns `201` with:
 
 ```json
@@ -166,7 +165,7 @@ It does not yet include `submitters` or `uploads`.
 
 ## Data and storage notes
 
-- SQLite database path: `php-app/src/data/changelog.db`
+- SQLite database path: `src/data/changelog.db`
 - Table: `entries(id, title, description, submitter, tags, timestamp)`
 - Tags are stored as a comma-wrapped CSV string (example: `,bug,ui,`)
 - `timestamp` is stored as epoch milliseconds
@@ -175,7 +174,7 @@ It does not yet include `submitters` or `uploads`.
 
 - Requires PHP with `pdo` and `pdo_sqlite`
 - `php.ini` sets `upload_max_filesize=10M` and `post_max_size=12M`
-- In compose, `php-app/src` is bind-mounted to `/var/www/html`
+- In compose, `src` is bind-mounted to `/var/www/html`
 
 ## Security notes
 

@@ -1,11 +1,11 @@
 services:
   php:
-    build: ./php-app
+    build: .
     env_file:
       - .env
     volumes:
-      - ./php-app/src:/var/www/html
-      - ./php-app/src/data:/var/www/html/data
+      - ./src:/var/www/html
+      - ./src/data:/var/www/html/data
     restart: unless-stopped
     networks:
       - changelog-network
