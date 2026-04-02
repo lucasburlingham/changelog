@@ -136,8 +136,24 @@ if ($method === 'GET') {
 
     $sql .= " ORDER BY $sort $order";
 
+    $limit = isset($q['limit']) ? (int)$q['limit'] : 0;
+    $offset = isset($q['offset']) ? (int)$q['offset'] : 0;
+    if ($limit > 0) {
+        if ($limit > 200) {
+            $limit = 200;
+        }
+        if ($offset < 0) {
+            $offset = 0;
+        }
+        $sql .= ' LIMIT :limit OFFSET :offset';
+    }
+
     $stmt = $pdo->prepare($sql);
     foreach ($binds as $k => $v) $stmt->bindValue($k, $v);
+    if ($limit > 0) {
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    }
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
