@@ -368,10 +368,17 @@ function renderPopularSubmitters(containerId, formInputSelector){
   });
 }
 
-function renderEntries(list){
+const ENTRIES_PAGE_SIZE = 50;
+let entriesOffset = 0;
+let loadingEntries = false;
+let hasMoreEntries = true;
+let activeEntryFilters = {};
+let entriesQueryVersion = 0;
+
+function renderEntries(list, append=false){
   const container = document.getElementById('entries');
-  container.innerHTML = '';
-  if(!list.length) { container.innerHTML = '<p>No entries</p>'; return; }
+  if(!append) container.innerHTML = '';
+  if(!append && !list.length) { container.innerHTML = '<p>No entries</p>'; return; }
   list.forEach(e=>{
     const div = document.createElement('div'); div.className='entry';
     const title = document.createElement('div'); title.innerHTML = `<strong>${escapeHtml(e.title)}</strong>`;
@@ -396,7 +403,7 @@ function renderEntries(list){
   });
 }
 
-async function loadAndShow(filters={}){
+function buildEntriesQuery(filters, offset=0, limit=ENTRIES_PAGE_SIZE){
   const params = new URLSearchParams();
   if(filters.from) params.set('from', filters.from);
   if(filters.to) params.set('to', filters.to);
@@ -404,8 +411,48 @@ async function loadAndShow(filters={}){
   if(filters.tags) params.set('tags', filters.tags);
   if(filters.sort) params.set('sort', filters.sort);
   if(filters.order) params.set('order', filters.order);
-  const data = await apiFetch('/api/entries.php?'+params.toString());
-  renderEntries(data);
+  params.set('limit', String(limit));
+  params.set('offset', String(offset));
+  return params;
+}
+
+async function loadNextEntriesBatch(expectedVersion=entriesQueryVersion){
+  if(expectedVersion !== entriesQueryVersion) return;
+  if(loadingEntries || !hasMoreEntries) return;
+  loadingEntries = true;
+  const requestOffset = entriesOffset;
+  try{
+    const params = buildEntriesQuery(activeEntryFilters, requestOffset, ENTRIES_PAGE_SIZE);
+    const data = await apiFetch('/api/entries.php?' + params.toString());
+    if(expectedVersion !== entriesQueryVersion) return;
+    renderEntries(data, requestOffset > 0);
+    entriesOffset = requestOffset + data.length;
+    hasMoreEntries = data.length === ENTRIES_PAGE_SIZE;
+  } finally {
+    if(expectedVersion === entriesQueryVersion) loadingEntries = false;
+  }
+}
+
+async function loadAndShow(filters={}){
+  entriesQueryVersion += 1;
+  const requestVersion = entriesQueryVersion;
+  loadingEntries = false;
+  activeEntryFilters = Object.assign({}, filters);
+  entriesOffset = 0;
+  hasMoreEntries = true;
+  await loadNextEntriesBatch(requestVersion);
+
+  // If the first page doesn't fill the viewport, keep loading pages.
+  while(requestVersion === entriesQueryVersion && hasMoreEntries && !loadingEntries && document.documentElement.scrollHeight <= (window.innerHeight + 120)){
+    await loadNextEntriesBatch(requestVersion);
+  }
+}
+
+function shouldLoadMoreEntries(){
+  if(loadingEntries || !hasMoreEntries) return false;
+  const scrollPosition = window.scrollY + window.innerHeight;
+  const threshold = document.documentElement.scrollHeight - 300;
+  return scrollPosition >= threshold;
 }
 
 document.addEventListener('DOMContentLoaded', async ()=>{
@@ -462,6 +509,22 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   });
 
   clearBtn.addEventListener('click', ()=>{ filterForm.reset(); loadAndShow({}); });
+
+  window.addEventListener('scroll', ()=>{
+    if(shouldLoadMoreEntries()){
+      loadNextEntriesBatch(entriesQueryVersion).catch(err=>{
+        console.error('Failed to load additional entries', err);
+      });
+    }
+  }, {passive:true});
+
+  window.addEventListener('resize', ()=>{
+    if(shouldLoadMoreEntries()){
+      loadNextEntriesBatch(entriesQueryVersion).catch(err=>{
+        console.error('Failed to load additional entries', err);
+      });
+    }
+  });
 
   loadAndShow({});
 });
