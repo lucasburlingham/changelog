@@ -18,4 +18,4 @@ This license shall be considered a work in progress, and the author reserve the 
 
 If you have any questions about these terms, please contact the owner of this repository in which you found this code.
 
-The code or work that accompany this license is Copyright (C) in 2025 by Lucas Burlingham. All other rights reserved except for specific exemptions specified in this document or in writing by the the author.
+The code or work that accompany this license is Copyright (C) in 2026 by Lucas Burlingham. All other rights reserved except for specific exemptions specified in this document or in writing by the the author.

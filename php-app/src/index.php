@@ -171,25 +171,26 @@ $tinyMceUrl = 'https://cdn.tiny.cloud/1/' . rawurlencode($tinyMceApiKey) . '/tin
     </div>
   </main>
 
-  <?php if ($companyName || $companyLogoUrl || $contactEmail): ?>
-    <footer class="container">
-      <div class="card meta" style="display:flex;gap:12px;align-items:center;justify-content:space-between">
-        <div style="display:flex;gap:12px;align-items:center">
-          <?php if ($companyLogoUrl): ?>
-            <img src="<?php echo $companyLogoUrl; ?>" alt="<?php echo htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8'); ?>" style="height:32px;">
-          <?php endif; ?>
-          <?php if ($companyUrl && $companyName): ?>
-            <a href="<?php echo htmlspecialchars($companyUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8'); ?></a>
-          <?php elseif ($companyName): ?>
-            <span><?php echo htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8'); ?></span>
-          <?php endif; ?>
-        </div>
-        <?php if ($contactEmail): ?>
-          <div><a href="mailto:<?php echo htmlspecialchars($contactEmail, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($contactEmail, ENT_QUOTES, 'UTF-8'); ?></a></div>
+  <footer class="container">
+    <div class="card meta" style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+      <div style="display:flex;gap:12px;align-items:center">
+        <?php if ($companyLogoUrl): ?>
+          <img src="<?php echo $companyLogoUrl; ?>" alt="<?php echo htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8'); ?>" style="height:32px;">
+        <?php endif; ?>
+        <?php if ($companyUrl && $companyName): ?>
+          <a href="<?php echo htmlspecialchars($companyUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8'); ?></a>
+        <?php elseif ($companyName): ?>
+          <span><?php echo htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8'); ?></span>
         <?php endif; ?>
       </div>
-    </footer>
-  <?php endif; ?>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+        <a href="https://lucasburlingham.me/license.md" target="_blank" rel="noopener noreferrer">Licensed under The Creator's License</a>
+        <?php if ($contactEmail): ?>
+          <a href="mailto:<?php echo htmlspecialchars($contactEmail, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($contactEmail, ENT_QUOTES, 'UTF-8'); ?></a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </footer>
 
   <script src="<?php echo htmlspecialchars($tinyMceUrl, ENT_QUOTES, 'UTF-8'); ?>" referrerpolicy="origin" crossorigin="anonymous"></script>
   <script src="/assets/app.js"></script>
