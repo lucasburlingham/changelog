@@ -27,7 +27,7 @@ if (!in_array('sqlite', PDO::getAvailableDrivers())) {
 }
 
 try {
-    $pdo = new PDO('sqlite:' . $dbFile, SQLITE3_OPEN_CREATE | SQLITE3_OPEN_READWRITE);
+    $pdo = new PDO('sqlite:' . $dbFile);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS entries (
@@ -39,9 +39,13 @@ try {
           timestamp INTEGER
         )"
     );
-} catch (Exception $e) {
+} catch (\Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to open or initialize database: ' . $e->getMessage()]);
+    echo json_encode([
+        'error' => 'Failed to open or initialize database',
+        'detail' => $e->getMessage(),
+        'db_path' => $dbFile,
+    ]);
     exit;
 }
 
