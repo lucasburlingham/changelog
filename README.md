@@ -5,6 +5,8 @@ A small changelog app with a browser UI and JSON API.
 - UI for creating entries with rich-text descriptions
 - Filtering and sorting entries
 - Tag and submitter suggestions with usage counts
+- Dark mode toggle with local preference persistence
+- Infinite scrolling entries list (batched loading)
 - SQLite-backed persistence
 - Docker Compose setup with optional Cloudflare Tunnel
 
@@ -41,7 +43,7 @@ Notes:
 `index.php` reads values in this order:
 
 1. Environment variables (`getenv`, `$_SERVER`, `$_ENV`)
-2. Root `.env` fallback parsing (for non-Docker Apache runs)
+2. First available `.env` fallback parsing from project paths (for non-Docker Apache runs)
 3. `settings.ini` (`page` and `settings` sections)
 4. Hard-coded defaults
 
@@ -102,6 +104,8 @@ Query params:
 - `tags` - comma-separated; each tag must be present
 - `sort` - `timestamp` (default), `submitter`, `tags`, `title`
 - `order` - `desc` (default) or `asc`
+- `limit` - optional max rows per response (capped at `200`)
+- `offset` - optional starting row offset (used for pagination)
 
 ### `GET /api/tags.php`
 
@@ -178,6 +182,13 @@ It does not yet include `submitters` or `uploads`.
 - No authentication or authorization is built in
 - No CORS policy headers are set by default
 - Rich text is sanitized client-side before submit; add server-side sanitization if you expose this publicly
+- Uploaded images are validated by MIME type and image parsing before being stored
+
+## License
+
+This project is licensed under **The Creator's License**.
+
+See [LICENSE.md](LICENSE.md) for the full license text and terms. They are most certainly different than what you're used to, so please read them carefully.
 
 ## Acknowledgments
 
